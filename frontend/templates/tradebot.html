@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>交易機械人 - XE 平台</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+    <div class="animated-bg"></div>
+
+    <!-- Top Bar (Mobile) -->
+    <div class="topbar">
+        <button class="topbar-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+        <div style="font-weight:700;color:var(--gold);">XE 平台</div>
+        <span id="topbarUserName" style="font-size:0.85rem;color:var(--text-secondary);"></span>
+    </div>
+
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-logo">
+            <div class="logo-icon">XE</div>
+            <span class="logo-text">XE 平台</span>
+        </div>
+        <nav class="sidebar-menu">
+            <div class="sidebar-section-label">主要功能</div>
+            <a href="/dashboard" class="sidebar-link"><span class="link-icon"><i class="fas fa-tachometer-alt"></i></span> 儀表板</a>
+            <a href="/mining" class="sidebar-link"><span class="link-icon"><i class="fas fa-gem"></i></span> 流量金挖掘</a>
+            <a href="/exchange" class="sidebar-link"><span class="link-icon"><i class="fas fa-exchange-alt"></i></span> 貨幣兌換</a>
+            <a href="/stocks" class="sidebar-link"><span class="link-icon"><i class="fas fa-chart-line"></i></span> 股票交易</a>
+            <a href="/crypto" class="sidebar-link"><span class="link-icon"><i class="fas fa-coins"></i></span> 加密貨幣</a>
+            <a href="/wallet" class="sidebar-link"><span class="link-icon"><i class="fas fa-wallet"></i></span> 錢包</a>
+            <a href="/deposit" class="sidebar-link"><span class="link-icon"><i class="fas fa-plus-circle"></i></span> 存款</a>
+            <a href="/withdraw" class="sidebar-link"><span class="link-icon"><i class="fas fa-university"></i></span> 提款</a>
+
+            <div class="sidebar-section-label">服務</div>
+            <a href="/kyc" class="sidebar-link"><span class="link-icon"><i class="fas fa-id-card"></i></span> KYC認證</a>
+            <a href="/tradebot" class="sidebar-link active"><span class="link-icon"><i class="fas fa-robot"></i></span> 交易機械人</a>
+            <a href="/ledger" class="sidebar-link"><span class="link-icon"><i class="fas fa-book"></i></span> 公開賬本</a>
+            <a href="/transactions" class="sidebar-link"><span class="link-icon"><i class="fas fa-history"></i></span> 交易記錄</a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="sidebar-user-info">
+                <div class="user-avatar" id="sidebarUserAvatar">U</div>
+                <div>
+                    <div class="user-name" id="sidebarUserName">用戶</div>
+                    <a href="#" onclick="logout(); return false;" style="font-size:0.75rem;color:var(--text-muted);"><i class="fas fa-sign-out-alt"></i> 登出</a>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="page-header">
+            <h1><i class="fas fa-robot" style="color:var(--gold);"></i> 交易機械人</h1>
+            <p>自動化交易機械人 — 24/7 不停運作</p>
+        </div>
+
+        <!-- Status Banner -->
+        <div class="card mb-24" id="botStatusCard" style="border-color:rgba(0,212,170,0.3);">
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+                <div style="display:flex;align-items:center;gap:16px;">
+                    <div style="width:48px;height:48px;border-radius:50%;background:rgba(0,212,170,0.12);display:flex;align-items:center;justify-content:center;font-size:1.5rem;">
+                        <i class="fas fa-circle" style="color:var(--success);font-size:0.8rem;" id="botStatusDot"></i>
+                    </div>
+                    <div>
+                        <div style="font-weight:600;font-size:1.1rem;">機械人狀態: <span id="botStatusText" style="color:var(--success);">運行中</span></div>
+                        <div style="font-size:0.85rem;color:var(--text-secondary);">最後更新: <span id="botLastUpdate">--</span></div>
+                    </div>
+                </div>
+                <div style="display:flex;gap:8px;">
+                    <span class="status-badge status-info" id="botOrdersCount">0 張訂單</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bot Wallet -->
+        <div class="card mb-24">
+            <div class="card-header">
+                <span class="card-title"><i class="fas fa-wallet" style="color:var(--gold);"></i> 機械人錢包</span>
+                <div style="display:flex;gap:8px;">
+                    <button class="btn btn-sm btn-success" onclick="transferIn()"><i class="fas fa-arrow-down"></i> 轉入</button>
+                    <button class="btn btn-sm btn-danger" onclick="transferOut()"><i class="fas fa-arrow-up"></i> 轉出</button>
+                </div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;">
+                <div style="padding:16px;background:var(--bg-input);border-radius:var(--radius-sm);text-align:center;">
+                    <div style="font-size:0.8rem;color:var(--text-secondary);">總餘額</div>
+                    <div style="font-size:1.5rem;font-weight:700;color:var(--gold);" id="botTotalBalance">$0.00</div>
+                </div>
+                <div style="padding:16px;background:var(--bg-input);border-radius:var(--radius-sm);text-align:center;">
+                    <div style="font-size:0.8rem;color:var(--text-secondary);">可用餘額</div>
+                    <div style="font-size:1.5rem;font-weight:700;color:var(--success);" id="botAvailableBalance">$0.00</div>
+                </div>
+                <div style="padding:16px;background:var(--bg-input);border-radius:var(--radius-sm);text-align:center;">
+                    <div style="font-size:0.8rem;color:var(--text-secondary);">鎖定中</div>
+                    <div style="font-size:1.5rem;font-weight:700;color:var(--warning);" id="botLockedBalance">$0.00</div>
+                </div>
+                <div style="padding:16px;background:var(--bg-input);border-radius:var(--radius-sm);text-align:center;">
+                    <div style="font-size:0.8rem;color:var(--text-secondary);">總利潤</div>
+                    <div style="font-size:1.5rem;font-weight:700;color:var(--cyan);" id="botProfit">$0.00</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <!-- Left: Order Form + Auto Trade -->
+            <div>
+                <!-- Place Order -->
+                <div class="card mb-24">
+                    <div class="card-header">
+                        <span class="card-title"><i class="fas fa-exchange-alt" style="color:var(--gold);"></i> 下單</span>
+                    </div>
+                    <form id="orderForm">
+                        <div class="form-group">
+                            <label class="form-label">交易對</label>
+                            <select id="orderPair" class="form-select">
+                                <option value="BTC/USD">BTC/USD</option>
+                                <option value="ETH/USD">ETH/USD</option>
+                                <option value="USDT/USD">USDT/USD</option>
+                                <option value="TC/USD">TC/USD</option>
+                            </select>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                            <div class="form-group">
+                                <label class="form-label">類型</label>
+                                <select id="orderType" class="form-select">
+                                    <option value="buy">買入</option>
+                                    <option value="sell">賣出</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">交易所</label>
+                                <select id="orderExchange" class="form-select">
+                                    <option value="">載入中...</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                            <div class="form-group">
+                                <label class="form-label">價格 (USD)</label>
+                                <input type="number" id="orderPrice" class="form-input" step="0.0001" min="0" placeholder="市價">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">數量</label>
+                                <input type="number" id="orderQuantity" class="form-input" step="0.0001" min="0.0001" placeholder="數量">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block"><i class="fas fa-paper-plane"></i> 提交訂單</button>
+                    </form>
+                </div>
+
+                <!-- Auto Trade -->
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title"><i class="fas fa-magic" style="color:var(--cyan);"></i> 自動交易</span>
+                    </div>
+                    <form id="autoTradeForm">
+                        <div class="form-group">
+                            <label class="form-label">交易對</label>
+                            <select id="autoPair" class="form-select">
+                                <option value="BTC/USD">BTC/USD</option>
+                                <option value="ETH/USD">ETH/USD</option>
+                                <option value="USDT/USD">USDT/USD</option>
+                                <option value="TC/USD">TC/USD</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">金額 (USD)</label>
+                            <input type="number" id="autoAmount" class="form-input" step="0.01" min="10" placeholder="輸入自動交易金額">
+                            <div class="form-hint">機械人會自動以最佳價格執行交易</div>
+                        </div>
+                        <button type="submit" class="btn btn-secondary btn-block"><i class="fas fa-play"></i> 啟動自動交易</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Right: Exchange Info + Order History -->
+            <div>
+                <!-- Exchange Info -->
+                <div class="card mb-24">
+                    <div class="card-header">
+                        <span class="card-title"><i class="fas fa-building" style="color:var(--gold);"></i> 交易所資訊</span>
+                    </div>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;" id="exchangeList">
+                        <div style="text-align:center;padding:20px;color:var(--text-secondary);"><i class="fas fa-spinner fa-spin"></i> 載入中...</div>
+                    </div>
+                </div>
+
+                <!-- Market Data -->
+                <div class="card mb-24">
+                    <div class="card-header">
+                        <span class="card-title"><i class="fas fa-chart-bar" style="color:var(--cyan);"></i> 市場數據</span>
+                        <select id="marketPairSelector" class="form-select" style="width:auto;max-width:150px;" onchange="loadMarketData()">
+                            <option value="BTC/USD">BTC/USD</option>
+                            <option value="ETH/USD">ETH/USD</option>
+                            <option value="USDT/USD">USDT/USD</option>
+                            <option value="TC/USD">TC/USD</option>
+                        </select>
+                    </div>
+                    <div id="marketData">
+                        <div style="text-align:center;padding:20px;color:var(--text-secondary);"><i class="fas fa-spinner fa-spin"></i> 載入中...</div>
+                    </div>
+                </div>
+
+                <!-- Order History -->
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title"><i class="fas fa-history" style="color:var(--gold);"></i> 訂單記錄</span>
+                    </div>
+                    <div class="table-container" style="max-height:350px;overflow-y:auto;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>交易對</th>
+                                    <th>類型</th>
+                                    <th>價格</th>
+                                    <th>數量</th>
+                                    <th>狀態</th>
+                                    <th>時間</th>
+                                </tr>
+                            </thead>
+                            <tbody id="orderHistoryBody">
+                                <tr><td colspan="6" style="text-align:center;color:var(--text-muted);">載入中...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Transfer Modal -->
+    <div class="modal-overlay" id="transferModal">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title" id="transferModalTitle"><i class="fas fa-exchange-alt"></i> 轉帳</span>
+                <button class="modal-close" onclick="closeTransferModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="transferForm">
+                    <div class="form-group">
+                        <label class="form-label">金額 (USD)</label>
+                        <input type="number" id="transferAmount" class="form-input" step="0.01" min="0.01" placeholder="輸入金額">
+                    </div>
+                    <div id="transferDirection"></div>
+                    <button type="submit" class="btn btn-primary btn-block" id="transferBtn"><i class="fas fa-arrow-right"></i> 確認</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="toastContainer" class="toast-container"></div>
+    <script src="/static/js/main.js"></script>
+    <script>
+        let transferMode = 'in';
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadExchanges();
+            await loadBotBalance();
+            await loadMarketData();
+            await loadOrderHistory();
+        });
+
+        // ── Load Exchanges ──
+        async function loadExchanges() {
+            try {
+                const data = await apiGet('/tradebot/exchanges');
+                const list = document.getElementById('exchangeList');
+                const exchangeSelect = document.getElementById('orderExchange');
+
+                if (data.exchanges && data.exchanges.length > 0) {
+                    list.innerHTML = data.exchanges.map(ex => `
+                        <div style="text-align:center;padding:16px;background:var(--bg-input);border-radius:var(--radius-sm);">
+                            <div style="font-size:1.5rem;margin-bottom:4px;">${ex.icon || '&#x1F3E6;'}</div>
+                            <div style="font-size:0.9rem;font-weight:600;">${ex.name}</div>
+                            <div style="font-size:0.75rem;color:var(--text-secondary);">${ex.status || 'active'}</div>
+                        </div>
+                    `).join('');
+
+                    exchangeSelect.innerHTML = data.exchanges.map(ex =>
+                        `<option value="${ex.id || ex.name}">${ex.name}</option>`
+                    ).join('');
+                } else {
+                    list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);">暫無交易所資訊</div>';
+                }
+            } catch (e) {
+                document.getElementById('exchangeList').innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);">載入失敗</div>';
+            }
+        }
+
+        // ── Load Bot Balance ──
+        async function loadBotBalance() {
+            try {
+                const data = await apiGet('/tradebot/balance');
+                if (data) {
+                    document.getElementById('botTotalBalance').textContent = formatCurrency(data.total || 0);
+                    document.getElementById('botAvailableBalance').textContent = formatCurrency(data.available || 0);
+                    document.getElementById('botLockedBalance').textContent = formatCurrency(data.locked || 0);
+                    document.getElementById('botProfit').textContent = formatCurrency(data.profit || 0);
+                }
+            } catch (e) {
+                console.error('Bot balance load error:', e);
+            }
+        }
+
+        // ── Load Market Data ──
+        async function loadMarketData() {
+            const pair = document.getElementById('marketPairSelector').value;
+            const el = document.getElementById('marketData');
+            try {
+                const data = await apiGet(`/tradebot/market/${pair}`);
+                if (data) {
+                    el.innerHTML = `
+                        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+                            <div style="text-align:center;padding:12px;background:var(--bg-input);border-radius:var(--radius-sm);">
+                                <div style="font-size:0.8rem;color:var(--text-secondary);">當前價格</div>
+                                <div style="font-size:1.3rem;font-weight:700;color:var(--gold);">${formatCurrency(data.price || 0)}</div>
+                            </div>
+                            <div style="text-align:center;padding:12px;background:var(--bg-input);border-radius:var(--radius-sm);">
+                                <div style="font-size:0.8rem;color:var(--text-secondary);">24h 變動</div>
+                                <div style="font-size:1.3rem;font-weight:700;${(data.change_24h || 0) >= 0 ? 'color:var(--success);' : 'color:var(--danger);'}">${(data.change_24h || 0).toFixed(2)}%</div>
+                            </div>
+                            <div style="text-align:center;padding:12px;background:var(--bg-input);border-radius:var(--radius-sm);">
+                                <div style="font-size:0.8rem;color:var(--text-secondary);">24h 成交量</div>
+                                <div style="font-size:1.3rem;font-weight:700;color:var(--cyan);">${formatCurrency(data.volume_24h || 0)}</div>
+                            </div>
+                        </div>
+                        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:12px;">
+                            <div style="text-align:center;padding:12px;background:var(--bg-input);border-radius:var(--radius-sm);">
+                                <div style="font-size:0.8rem;color:var(--text-secondary);">24h 最高</div>
+                                <div style="font-size:1.1rem;font-weight:600;">${formatCurrency(data.high_24h || 0)}</div>
+                            </div>
+                            <div style="text-align:center;padding:12px;background:var(--bg-input);border-radius:var(--radius-sm);">
+                                <div style="font-size:0.8rem;color:var(--text-secondary);">24h 最低</div>
+                                <div style="font-size:1.1rem;font-weight:600;">${formatCurrency(data.low_24h || 0)}</div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);">暫無市場數據</div>';
+                }
+            } catch (e) {
+                el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);">市場數據載入失敗</div>';
+            }
+        }
+
+        // ── Load Order History ──
+        async function loadOrderHistory() {
+            const tbody = document.getElementById('orderHistoryBody');
+            try {
+                const data = await apiGet('/tradebot/orders');
+                const orders = data.orders || data || [];
+                if (orders.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);">暫無訂單記錄</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = orders.map(order => {
+                    const statusClass = order.status === 'filled' || order.status === 'completed' ? 'status-completed' :
+                        order.status === 'pending' || order.status === 'open' ? 'status-pending' : 'status-failed';
+                    const statusMap = { 'filled': '已成交', 'completed': '已完成', 'pending': '處理中', 'open': '進行中', 'cancelled': '已取消', 'failed': '失敗' };
+                    const typeIcon = order.type === 'buy' ? '<span style="color:var(--success);">&#x2191; 買入</span>' : '<span style="color:var(--danger);">&#x2193; 賣出</span>';
+                    return `<tr>
+                        <td>${order.pair || '---'}</td>
+                        <td>${typeIcon}</td>
+                        <td>${formatCurrency(order.price || 0)}</td>
+                        <td>${(order.quantity || 0).toFixed(4)}</td>
+                        <td><span class="status-badge ${statusClass}">${statusMap[order.status] || order.status}</span></td>
+                        <td style="font-size:0.8rem;color:var(--text-secondary);">${formatTime(order.created_at)}</td>
+                    </tr>`;
+                }).join('');
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);">載入失敗</td></tr>';
+            }
+        }
+
+        // ── Transfer In/Out ──
+        function transferIn() {
+            transferMode = 'in';
+            document.getElementById('transferModalTitle').innerHTML = '<i class="fas fa-arrow-down" style="color:var(--success);"></i> 轉入機械人錢包';
+            document.getElementById('transferDirection').innerHTML = '<div style="padding:8px 12px;background:rgba(16,185,129,0.08);border-radius:var(--radius-sm);margin-bottom:12px;font-size:0.85rem;">將資金從主錢包轉入交易機械人錢包</div>';
+            document.getElementById('transferBtn').innerHTML = '<i class="fas fa-arrow-down"></i> 確認轉入';
+            document.getElementById('transferBtn').className = 'btn btn-success btn-block';
+            document.getElementById('transferModal').classList.add('active');
+        }
+
+        function transferOut() {
+            transferMode = 'out';
+            document.getElementById('transferModalTitle').innerHTML = '<i class="fas fa-arrow-up" style="color:var(--danger);"></i> 轉出到主錢包';
+            document.getElementById('transferDirection').innerHTML = '<div style="padding:8px 12px;background:rgba(239,68,68,0.08);border-radius:var(--radius-sm);margin-bottom:12px;font-size:0.85rem;">將資金從交易機械人錢包轉回主錢包</div>';
+            document.getElementById('transferBtn').innerHTML = '<i class="fas fa-arrow-up"></i> 確認轉出';
+            document.getElementById('transferBtn').className = 'btn btn-danger btn-block';
+            document.getElementById('transferModal').classList.add('active');
+        }
+
+        function closeTransferModal() {
+            document.getElementById('transferModal').classList.remove('active');
+        }
+
+        document.getElementById('transferForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const amount = parseFloat(document.getElementById('transferAmount').value);
+            if (!amount || amount <= 0) {
+                showToast('請輸入有效金額', 'error');
+                return;
+            }
+
+            try {
+                const endpoint = transferMode === 'in' ? '/tradebot/transfer-in' : '/tradebot/transfer-out';
+                const btn = document.getElementById('transferBtn');
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 處理中...';
+
+                const res = await apiPost(endpoint, { amount });
+
+                if (res.success) {
+                    showToast(res.message || '轉帳成功', 'success');
+                    closeTransferModal();
+                    document.getElementById('transferAmount').value = '';
+                    loadBotBalance();
+                } else {
+                    showToast(res.message || '轉帳失敗', 'error');
+                }
+
+                btn.disabled = false;
+                btn.innerHTML = transferMode === 'in' ? '<i class="fas fa-arrow-down"></i> 確認轉入' : '<i class="fas fa-arrow-up"></i> 確認轉出';
+            } catch (err) {
+                showToast('轉帳失敗: ' + err.message, 'error');
+                const btn = document.getElementById('transferBtn');
+                btn.disabled = false;
+                btn.innerHTML = transferMode === 'in' ? '<i class="fas fa-arrow-down"></i> 確認轉入' : '<i class="fas fa-arrow-up"></i> 確認轉出';
+            }
+        });
+
+        // ── Submit Order ──
+        document.getElementById('orderForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const pair = document.getElementById('orderPair').value;
+            const type = document.getElementById('orderType').value;
+            const price = parseFloat(document.getElementById('orderPrice').value);
+            const quantity = parseFloat(document.getElementById('orderQuantity').value);
+            const exchange = document.getElementById('orderExchange').value;
+
+            if (!quantity || quantity <= 0) {
+                showToast('請輸入有效數量', 'error');
+                return;
+            }
+
+            try {
+                const btn = e.target.querySelector('button[type="submit"]');
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 提交中...';
+
+                const payload = { pair, type, price, quantity, exchange };
+                const res = await apiPost('/tradebot/place-order', payload);
+
+                if (res.success) {
+                    showToast(res.message || '訂單已提交', 'success');
+                    document.getElementById('orderPrice').value = '';
+                    document.getElementById('orderQuantity').value = '';
+                    loadOrderHistory();
+                } else {
+                    showToast(res.message || '提交失敗', 'error');
+                }
+
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-paper-plane"></i> 提交訂單';
+            } catch (err) {
+                showToast('提交訂單失敗: ' + err.message, 'error');
+                const btn = e.target.querySelector('button[type="submit"]');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-paper-plane"></i> 提交訂單';
+            }
+        });
+
+        // ── Auto Trade ──
+        document.getElementById('autoTradeForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const pair = document.getElementById('autoPair').value;
+            const amount = parseFloat(document.getElementById('autoAmount').value);
+
+            if (!amount || amount < 10) {
+                showToast('自動交易金額最少為 $10 USD', 'error');
+                return;
+            }
+
+            try {
+                const btn = e.target.querySelector('button[type="submit"]');
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 執行中...';
+
+                const res = await apiPost('/tradebot/auto-trade', { pair, amount });
+
+                if (res.success) {
+                    showToast(res.message || '自動交易已啟動', 'success');
+                    document.getElementById('autoAmount').value = '';
+                    loadOrderHistory();
+                } else {
+                    showToast(res.message || '自動交易失敗', 'error');
+                }
+
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-play"></i> 啟動自動交易';
+            } catch (err) {
+                showToast('自動交易失敗: ' + err.message, 'error');
+                const btn = e.target.querySelector('button[type="submit"]');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-play"></i> 啟動自動交易';
+            }
+        });
+    </script>
+</body>
+</html>

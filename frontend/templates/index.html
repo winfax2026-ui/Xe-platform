@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>股票及虛擬貨幣平台 XE版 — 登入 / 註冊</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* ===== Auth Page Overrides ===== */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0a0e1a;
+            color: #f1f5f9;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse at 15% 30%, rgba(0,212,170,0.12) 0%, transparent 45%),
+                radial-gradient(ellipse at 85% 60%, rgba(240,185,11,0.10) 0%, transparent 45%),
+                radial-gradient(ellipse at 50% 80%, rgba(99,102,241,0.08) 0%, transparent 50%);
+            z-index: 0;
+            animation: bgShift 10s ease-in-out infinite alternate;
+        }
+
+        @keyframes bgShift {
+            0% { opacity: 0.7; transform: scale(1); }
+            100% { opacity: 1; transform: scale(1.05); }
+        }
+
+        /* Floating particles */
+        .particles {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            opacity: 0.3;
+            animation: floatUp linear infinite;
+        }
+
+        .particle:nth-child(1) { left: 10%; width: 3px; height: 3px; background: #00d4aa; animation-duration: 18s; animation-delay: 0s; }
+        .particle:nth-child(2) { left: 25%; width: 5px; height: 5px; background: #f0b90b; animation-duration: 22s; animation-delay: 2s; }
+        .particle:nth-child(3) { left: 40%; width: 3px; height: 3px; background: #6366f1; animation-duration: 15s; animation-delay: 4s; }
+        .particle:nth-child(4) { left: 55%; width: 6px; height: 6px; background: #00d4aa; animation-duration: 20s; animation-delay: 1s; }
+        .particle:nth-child(5) { left: 70%; width: 4px; height: 4px; background: #f0b90b; animation-duration: 17s; animation-delay: 3s; }
+        .particle:nth-child(6) { left: 85%; width: 3px; height: 3px; background: #6366f1; animation-duration: 25s; animation-delay: 5s; }
+        .particle:nth-child(7) { left: 50%; width: 5px; height: 5px; background: #00d4aa; animation-duration: 19s; animation-delay: 6s; }
+        .particle:nth-child(8) { left: 90%; width: 4px; height: 4px; background: #f0b90b; animation-duration: 21s; animation-delay: 2.5s; }
+
+        @keyframes floatUp {
+            0% { transform: translateY(100vh) scale(0); opacity: 0; }
+            10% { opacity: 0.3; }
+            90% { opacity: 0.15; }
+            100% { transform: translateY(-10vh) scale(1); opacity: 0; }
+        }
+
+        /* Grid overlay */
+        .grid-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none;
+        }
+
+        /* Header */
+        .auth-header {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            margin-bottom: 36px;
+        }
+
+        .auth-header .logo-icon {
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, #00d4aa, #f0b90b);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1.2rem;
+            color: #0a0e1a;
+            margin: 0 auto 16px;
+            box-shadow: 0 0 40px rgba(0,212,170,0.25), 0 0 80px rgba(240,185,11,0.1);
+            animation: logoPulse 3s ease-in-out infinite;
+        }
+
+        @keyframes logoPulse {
+            0%, 100% { box-shadow: 0 0 40px rgba(0,212,170,0.25), 0 0 80px rgba(240,185,11,0.1); }
+            50% { box-shadow: 0 0 60px rgba(0,212,170,0.35), 0 0 100px rgba(240,185,11,0.15); }
+        }
+
+        .auth-header h1 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #00d4aa, #f0b90b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.5px;
+        }
+
+        .auth-header .tagline {
+            color: #94a3b8;
+            font-size: 0.85rem;
+            margin-top: 8px;
+            letter-spacing: 1px;
+            font-weight: 400;
+        }
+
+        .auth-header .tagline span {
+            color: #64748b;
+        }
+
+        /* Main Card - Glassmorphism */
+        .auth-card {
+            position: relative;
+            z-index: 2;
+            width: 440px;
+            max-width: 92vw;
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 20px;
+            padding: 40px 36px 32px;
+            box-shadow:
+                0 8px 60px rgba(0, 0, 0, 0.5),
+                0 0 0 1px rgba(255, 255, 255, 0.03) inset;
+            animation: cardEnter 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            transform: translateY(30px);
+            opacity: 0;
+        }
+
+        @keyframes cardEnter {
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .auth-card::before {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border-radius: 20px;
+            padding: 1px;
+            background: linear-gradient(135deg, rgba(0,212,170,0.3), rgba(240,185,11,0.2), rgba(99,102,241,0.2));
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+
+        /* Tabs */
+        .auth-tabs {
+            display: flex;
+            gap: 4px;
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 12px;
+            padding: 4px;
+            margin-bottom: 28px;
+            position: relative;
+        }
+
+        .auth-tab {
+            flex: 1;
+            padding: 10px 16px;
+            text-align: center;
+            border: none;
+            background: transparent;
+            color: #64748b;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 1;
+            font-family: inherit;
+        }
+
+        .auth-tab i {
+            margin-right: 6px;
+            font-size: 0.85rem;
+        }
+
+        .auth-tab.active {
+            color: #f1f5f9;
+            background: rgba(0, 212, 170, 0.12);
+        }
+
+        .auth-tab:hover:not(.active) {
+            color: #94a3b8;
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        /* Form Containers */
+        .auth-form-container {
+            position: relative;
+        }
+
+        .auth-form {
+            display: none;
+            animation: formSlide 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .auth-form.active {
+            display: block;
+        }
+
+        @keyframes formSlide {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Form Fields */
+        .auth-field {
+            margin-bottom: 18px;
+        }
+
+        .auth-field label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: #94a3b8;
+            margin-bottom: 6px;
+            letter-spacing: 0.3px;
+        }
+
+        .auth-field label .required {
+            color: #ef4444;
+            margin-left: 2px;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-wrapper .input-icon {
+            position: absolute;
+            left: 14px;
+            color: #475569;
+            font-size: 0.9rem;
+            pointer-events: none;
+            transition: color 0.2s;
+        }
+
+        .input-wrapper:focus-within .input-icon {
+            color: #00d4aa;
+        }
+
+        .auth-field input {
+            width: 100%;
+            padding: 13px 14px 13px 42px;
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 12px;
+            color: #f1f5f9;
+            font-size: 0.9rem;
+            font-family: inherit;
+            transition: all 0.25s ease;
+            outline: none;
+        }
+
+        .auth-field input:focus {
+            border-color: rgba(0, 212, 170, 0.4);
+            background: rgba(30, 41, 59, 0.9);
+            box-shadow: 0 0 0 3px rgba(0, 212, 170, 0.08);
+        }
+
+        .auth-field input::placeholder {
+            color: #475569;
+            font-size: 0.85rem;
+        }
+
+        .auth-field input.invite-code {
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 2px;
+            font-size: 0.95rem;
+        }
+
+        .auth-field .field-hint {
+            display: block;
+            font-size: 0.75rem;
+            color: #475569;
+            margin-top: 5px;
+        }
+
+        /* Password toggle */
+        .password-toggle {
+            position: absolute;
+            right: 14px;
+            background: none;
+            border: none;
+            color: #475569;
+            cursor: pointer;
+            font-size: 0.9rem;
+            padding: 4px;
+            transition: color 0.2s;
+        }
+
+        .password-toggle:hover {
+            color: #94a3b8;
+        }
+
+        /* Submit Button */
+        .auth-submit {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            font-family: inherit;
+            cursor: pointer;
+            background: linear-gradient(135deg, #00d4aa, #059669);
+            color: #0a0e1a;
+            transition: all 0.3s ease;
+            margin-top: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .auth-submit::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, #00d4aa, #f0b90b);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .auth-submit:hover::before {
+            opacity: 1;
+        }
+
+        .auth-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0, 212, 170, 0.3);
+        }
+
+        .auth-submit:active {
+            transform: translateY(0);
+        }
+
+        .auth-submit span {
+            position: relative;
+            z-index: 1;
+        }
+
+        .auth-submit i {
+            position: relative;
+            z-index: 1;
+            font-size: 0.9rem;
+        }
+
+        .auth-submit:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        /* Divider */
+        .auth-divider {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin: 20px 0 16px;
+        }
+
+        .auth-divider::before,
+        .auth-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+        }
+
+        .auth-divider span {
+            color: #475569;
+            font-size: 0.8rem;
+            white-space: nowrap;
+        }
+
+        /* Switch link */
+        .auth-switch {
+            text-align: center;
+            font-size: 0.85rem;
+            color: #64748b;
+            margin-top: 6px;
+        }
+
+        .auth-switch a {
+            color: #00d4aa;
+            text-decoration: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .auth-switch a:hover {
+            color: #f0b90b;
+            text-decoration: underline;
+        }
+
+        /* Terms */
+        .auth-terms {
+            margin-top: 18px;
+            padding: 14px 16px;
+            background: rgba(245, 158, 11, 0.06);
+            border: 1px solid rgba(245, 158, 11, 0.12);
+            border-radius: 12px;
+            font-size: 0.75rem;
+            color: #64748b;
+            line-height: 1.7;
+        }
+
+        .auth-terms strong {
+            color: #94a3b8;
+        }
+
+        /* Error / Success message inline */
+        .auth-message {
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-size: 0.82rem;
+            margin-bottom: 16px;
+            display: none;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .auth-message.show {
+            display: flex;
+        }
+
+        .auth-message.error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+        }
+
+        .auth-message.success {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            color: #6ee7b7;
+        }
+
+        /* Footer */
+        .auth-footer {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            margin-top: 30px;
+            font-size: 0.75rem;
+            color: #334155;
+        }
+
+        .auth-footer a {
+            color: #475569;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .auth-footer a:hover {
+            color: #64748b;
+        }
+
+        .auth-footer .sep {
+            margin: 0 8px;
+            color: #1e293b;
+        }
+
+        /* ===== Responsive ===== */
+        @media (max-width: 480px) {
+            .auth-card {
+                padding: 28px 20px 24px;
+                border-radius: 16px;
+            }
+
+            .auth-header h1 {
+                font-size: 1.4rem;
+            }
+
+            .auth-header .logo-icon {
+                width: 44px;
+                height: 44px;
+                font-size: 1rem;
+            }
+
+            .auth-tab {
+                font-size: 0.8rem;
+                padding: 8px 10px;
+            }
+
+            .auth-tab i {
+                margin-right: 4px;
+            }
+
+            .auth-field input {
+                padding: 11px 12px 11px 38px;
+                font-size: 0.85rem;
+            }
+        }
+
+        @media (max-height: 700px) {
+            .auth-header {
+                margin-bottom: 20px;
+            }
+            .auth-header .logo-icon {
+                width: 42px;
+                height: 42px;
+                margin-bottom: 10px;
+            }
+            .auth-header h1 {
+                font-size: 1.5rem;
+            }
+            .auth-card {
+                padding: 24px 28px 20px;
+            }
+            .auth-field {
+                margin-bottom: 12px;
+            }
+        }
+
+        /* Loading spinner for button */
+        .btn-spinner {
+            display: none;
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(10, 14, 26, 0.2);
+            border-top-color: #0a0e1a;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            position: relative;
+            z-index: 1;
+        }
+
+        .auth-submit.loading .btn-spinner {
+            display: inline-block;
+        }
+
+        .auth-submit.loading .btn-text {
+            display: none;
+        }
+
+        .auth-submit.loading .btn-spinner + .btn-text {
+            display: inline;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Invite code validation indicator */
+        .invite-status {
+            font-size: 0.75rem;
+            margin-top: 4px;
+            display: none;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .invite-status.show {
+            display: flex;
+        }
+
+        .invite-status.valid {
+            color: #10b981;
+        }
+
+        .invite-status.invalid {
+            color: #ef4444;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Background Particles -->
+    <div class="particles">
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+    </div>
+
+    <div class="grid-overlay"></div>
+
+    <!-- Header -->
+    <div class="auth-header">
+        <div class="logo-icon">XE</div>
+        <h1>股票及虛擬貨幣平台 XE版</h1>
+        <p class="tagline">
+            <span>流量金</span> · <span>貨幣</span> · <span>股票</span> · <span>加密貨幣</span> · <span>交易機械人</span>
+        </p>
+    </div>
+
+    <!-- Auth Card -->
+    <div class="auth-card" id="authCard">
+
+        <!-- Tabs -->
+        <div class="auth-tabs" role="tablist">
+            <button class="auth-tab active" data-tab="login" role="tab" aria-selected="true">
+                <i class="fas fa-sign-in-alt"></i> 登入
+            </button>
+            <button class="auth-tab" data-tab="register" role="tab" aria-selected="false">
+                <i class="fas fa-user-plus"></i> 註冊
+            </button>
+        </div>
+
+        <!-- Message area -->
+        <div class="auth-message" id="authMessage"></div>
+
+        <!-- Login Form -->
+        <div class="auth-form-container">
+            <form class="auth-form active" id="loginForm" autocomplete="off">
+                <div class="auth-field">
+                    <label>用戶名或電郵 <span class="required">*</span></label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-user input-icon"></i>
+                        <input type="text" name="username" placeholder="請輸入用戶名或電郵" required autocomplete="username">
+                    </div>
+                </div>
+                <div class="auth-field">
+                    <label>密碼 <span class="required">*</span></label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-lock input-icon"></i>
+                        <input type="password" name="password" id="loginPassword" placeholder="請輸入密碼" required autocomplete="current-password">
+                        <button type="button" class="password-toggle" onclick="togglePassword('loginPassword', this)" tabindex="-1">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                <button type="submit" class="auth-submit" id="loginBtn">
+                    <span class="btn-spinner"></span>
+                    <span class="btn-text"><i class="fas fa-arrow-right-to-bracket"></i> 登入</span>
+                </button>
+                <div class="auth-switch">
+                    尚未有帳戶？ <a onclick="switchTab('register')">立即註冊</a>
+                </div>
+            </form>
+
+            <!-- Register Form -->
+            <form class="auth-form" id="registerForm" autocomplete="off">
+                <div class="auth-field">
+                    <label>邀請碼 <span class="required">*</span></label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-ticket input-icon"></i>
+                        <input type="text" name="invite_code" id="inviteCode" class="invite-code"
+                               placeholder="請輸入邀請碼（自動大寫）" required maxlength="20"
+                               oninput="this.value = this.value.toUpperCase()">
+                    </div>
+                    <div class="invite-status" id="inviteStatus"></div>
+                    <small class="field-hint">需要有效邀請碼才能註冊</small>
+                </div>
+                <div class="auth-field">
+                    <label>用戶名 <span class="required">*</span></label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-user-circle input-icon"></i>
+                        <input type="text" name="username" placeholder="3-20位字母或數字" required minlength="3" maxlength="20" autocomplete="off">
+                    </div>
+                </div>
+                <div class="auth-field">
+                    <label>電郵地址 <span class="required">*</span></label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-envelope input-icon"></i>
+                        <input type="email" name="email" placeholder="your@email.com" required autocomplete="email">
+                    </div>
+                </div>
+                <div class="auth-field">
+                    <label>密碼 <span class="required">*</span></label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-lock input-icon"></i>
+                        <input type="password" name="password" id="regPassword" placeholder="至少6個字符" required minlength="6" autocomplete="new-password">
+                        <button type="button" class="password-toggle" onclick="togglePassword('regPassword', this)" tabindex="-1">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="auth-field">
+                    <label>確認密碼 <span class="required">*</span></label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-lock input-icon"></i>
+                        <input type="password" name="confirm_password" id="regConfirmPassword" placeholder="再次輸入密碼" required autocomplete="new-password">
+                        <button type="button" class="password-toggle" onclick="togglePassword('regConfirmPassword', this)" tabindex="-1">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                <button type="submit" class="auth-submit" id="registerBtn">
+                    <span class="btn-spinner"></span>
+                    <span class="btn-text"><i class="fas fa-rocket"></i> 註冊帳戶</span>
+                </button>
+                <div class="auth-switch">
+                    已有帳戶？ <a onclick="switchTab('login')">立即登入</a>
+                </div>
+                <div class="auth-terms">
+                    <strong>📋 註冊即表示你同意：</strong><br>
+                    • 1 流量金（TC）永久固定等值 1 USD<br>
+                    • 提款需完成 KYC 身份認證<br>
+                    • 帳戶僅限本人使用
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="auth-footer">
+        <a href="/">首頁</a>
+        <span class="sep">·</span>
+        <a href="/public-records">公開紀錄</a>
+        <span class="sep">·</span>
+        <span>&copy; 2024 XE Platform</span>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <script src="/static/js/main.js"></script>
+    <script>
+        // ============================================================
+        //  Auth Page — 登入 / 註冊 (Standalone)
+        // ============================================================
+
+        (function() {
+            'use strict';
+
+            const DOM = {
+                card: document.getElementById('authCard'),
+                tabs: document.querySelectorAll('.auth-tab'),
+                loginForm: document.getElementById('loginForm'),
+                registerForm: document.getElementById('registerForm'),
+                loginBtn: document.getElementById('loginBtn'),
+                registerBtn: document.getElementById('registerBtn'),
+                message: document.getElementById('authMessage'),
+                inviteCode: document.getElementById('inviteCode'),
+                inviteStatus: document.getElementById('inviteStatus')
+            };
+
+            // ---- Tab switching ----
+            function switchTab(tabName) {
+                DOM.tabs.forEach(t => {
+                    const isActive = t.dataset.tab === tabName;
+                    t.classList.toggle('active', isActive);
+                    t.setAttribute('aria-selected', isActive);
+                });
+
+                const loginForm = DOM.loginForm;
+                const regForm = DOM.registerForm;
+                loginForm.classList.toggle('active', tabName === 'login');
+                regForm.classList.toggle('active', tabName === 'register');
+
+                // Clear messages
+                hideMessage();
+
+                // Reset validation styling
+                [loginForm, regForm].forEach(f => f.querySelectorAll('input').forEach(i => i.style.borderColor = ''));
+            }
+
+            // Expose globally for onclick
+            window.switchTab = switchTab;
+
+            // ---- Password visibility toggle ----
+            window.togglePassword = function(inputId, btn) {
+                const input = document.getElementById(inputId);
+                if (!input) return;
+                const isPassword = input.type === 'password';
+                input.type = isPassword ? 'text' : 'password';
+                btn.querySelector('i').className = isPassword ? 'fas fa-eye-slash' : 'fas fa-eye';
+            };
+
+            // ---- Show inline message ----
+            function showMessage(text, type) {
+                const el = DOM.message;
+                el.textContent = text;
+                el.className = 'auth-message ' + type + ' show';
+            }
+
+            function hideMessage() {
+                DOM.message.className = 'auth-message';
+                DOM.message.textContent = '';
+            }
+
+            // ---- Set loading state ----
+            function setLoading(btn, loading) {
+                btn.classList.toggle('loading', loading);
+                btn.disabled = loading;
+            }
+
+            // ---- Invite code validation (blur) ----
+            if (DOM.inviteCode) {
+                DOM.inviteCode.addEventListener('blur', async function() {
+                    const code = this.value.trim();
+                    const statusEl = DOM.inviteStatus;
+                    if (code.length < 6) {
+                        statusEl.className = 'invite-status';
+                        statusEl.textContent = '';
+                        return;
+                    }
+                    try {
+                        const res = await fetch('/auth/check-invite-code', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ code })
+                        });
+                        const data = await res.json();
+                        if (data.valid) {
+                            statusEl.className = 'invite-status show valid';
+                            statusEl.innerHTML = '<i class="fas fa-check-circle"></i> 有效邀請碼（' + (data.owner ? '來自 ' + data.owner : '') + '）';
+                            this.style.borderColor = '#10b981';
+                        } else {
+                            statusEl.className = 'invite-status show invalid';
+                            statusEl.innerHTML = '<i class="fas fa-exclamation-circle"></i> ' + (data.message || '無效邀請碼');
+                            this.style.borderColor = '#ef4444';
+                        }
+                    } catch (e) {
+                        statusEl.className = 'invite-status show invalid';
+                        statusEl.innerHTML = '<i class="fas fa-exclamation-circle"></i> 驗證失敗';
+                        this.style.borderColor = '#ef4444';
+                    }
+                });
+            }
+
+            // ---- LOGIN ----
+            DOM.loginForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                hideMessage();
+
+                const formData = new FormData(this);
+                const data = {
+                    username: formData.get('username').trim(),
+                    password: formData.get('password')
+                };
+
+                if (!data.username || !data.password) {
+                    showMessage('請填寫用戶名和密碼', 'error');
+                    return;
+                }
+
+                setLoading(DOM.loginBtn, true);
+
+                try {
+                    const res = await fetch('/auth/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                    const result = await res.json();
+
+                    if (result.success) {
+                        showMessage(result.message || '登入成功 🎉', 'success');
+                        setTimeout(() => { window.location.href = '/dashboard'; }, 800);
+                    } else {
+                        showMessage(result.message || '登入失敗，請檢查用戶名或密碼', 'error');
+                        setLoading(DOM.loginBtn, false);
+                    }
+                } catch (err) {
+                    showMessage('網絡錯誤，請稍後再試', 'error');
+                    setLoading(DOM.loginBtn, false);
+                }
+            });
+
+            // ---- REGISTER ----
+            DOM.registerForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                hideMessage();
+
+                const formData = new FormData(this);
+                const data = {
+                    username: formData.get('username').trim(),
+                    email: formData.get('email').trim(),
+                    password: formData.get('password'),
+                    confirm_password: formData.get('confirm_password'),
+                    invite_code: formData.get('invite_code').trim().toUpperCase()
+                };
+
+                // Validation
+                if (!data.invite_code || data.invite_code.length < 6) {
+                    showMessage('請輸入有效的邀請碼', 'error');
+                    return;
+                }
+                if (!data.username || data.username.length < 3) {
+                    showMessage('用戶名至少需要3個字符', 'error');
+                    return;
+                }
+                if (!data.email || !data.email.includes('@')) {
+                    showMessage('請輸入有效的電郵地址', 'error');
+                    return;
+                }
+                if (data.password.length < 6) {
+                    showMessage('密碼至少需要6個字符', 'error');
+                    return;
+                }
+                if (data.password !== data.confirm_password) {
+                    showMessage('兩次輸入嘅密碼唔一致', 'error');
+                    return;
+                }
+
+                setLoading(DOM.registerBtn, true);
+
+                try {
+                    const res = await fetch('/auth/register', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            username: data.username,
+                            email: data.email,
+                            password: data.password,
+                            invite_code: data.invite_code
+                        })
+                    });
+                    const result = await res.json();
+
+                    if (result.success) {
+                        showMessage(result.message || '註冊成功 🎉 即將跳轉...', 'success');
+                        setTimeout(() => { window.location.href = '/dashboard'; }, 1200);
+                    } else {
+                        showMessage(result.message || '註冊失敗', 'error');
+                        setLoading(DOM.registerBtn, false);
+                    }
+                } catch (err) {
+                    showMessage('網絡錯誤，請稍後再試', 'error');
+                    setLoading(DOM.registerBtn, false);
+                }
+            });
+
+            // ---- Tab click handlers ----
+            DOM.tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    switchTab(this.dataset.tab);
+                });
+            });
+
+        })();
+    </script>
+</body>
+</html>

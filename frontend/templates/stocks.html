@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>股票交易 - XE平台</title>
+<link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+<div class="app-container">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">XE<small>版</small></div>
+    <nav class="sidebar-nav">
+      <a href="/dashboard"><span class="nav-icon">📊</span>儀表板</a>
+      <a href="/mining"><span class="nav-icon">⛏️</span>流量金挖掘</a>
+      <a href="/exchange-page"><span class="nav-icon">🔄</span>貨幣兌換</a>
+      <a href="/stocks-page" class="active"><span class="nav-icon">📈</span>股票交易</a>
+      <a href="/crypto-page"><span class="nav-icon">₿</span>加密貨幣</a>
+      <a href="/wallet"><span class="nav-icon">👛</span>錢包</a>
+      <a href="/deposit"><span class="nav-icon">📥</span>存款</a>
+      <a href="/withdraw"><span class="nav-icon">📤</span>提款</a>
+      <a href="/kyc-page"><span class="nav-icon">🆔</span>KYC認證</a>
+      <a href="/tradebot-page"><span class="nav-icon">🤖</span>交易機械人</a>
+      <a href="/ledger"><span class="nav-icon">📜</span>公開賬本</a>
+      <a href="/transactions"><span class="nav-icon">🧾</span>交易記錄</a>
+    </nav>
+  </aside>
+  <main class="main-content">
+    <header class="topbar">
+      <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+      <h2>股票交易 (美股 / 港股)</h2>
+      <div class="topbar-right"><span id="userDisplay">--</span> <button onclick="logout()" class="btn-sm btn-danger">登出</button></div>
+    </header>
+    <div class="content">
+      <div class="row">
+        <div class="col-6">
+          <div class="card">
+            <div class="tab-bar">
+              <button class="tab-btn active" onclick="switchMarket('US')" id="tabUS">🇺🇸 美股</button>
+              <button class="tab-btn" onclick="switchMarket('HK')" id="tabHK">🇭🇰 港股</button>
+            </div>
+            <div class="table-responsive">
+              <table class="table" id="stockTable">
+                <thead><tr><th>代號</th><th>名稱</th><th>現價</th><th>變動</th><th>操作</th></tr></thead>
+                <tbody id="stockList"><tr><td colspan="5" class="text-center">載入中...</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="card">
+            <h3>我的投資組合</h3>
+            <div class="table-responsive">
+              <table class="table" id="portfolioTable">
+                <thead><tr><th>代號</th><th>股數</th><th>均價</th><th>現價</th><th>盈虧</th><th>操作</th></tr></thead>
+                <tbody id="portfolioList"><tr><td colspan="6" class="text-center">載入中...</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card">
+            <h3>快速交易</h3>
+            <form id="tradeForm">
+              <div class="form-group">
+                <label>股票代號</label>
+                <input type="text" id="tradeSymbol" class="form-input" placeholder="例如 AAPL" style="text-transform:uppercase">
+              </div>
+              <div class="form-group">
+                <label>市場</label>
+                <select id="tradeMarket" class="form-input"><option value="US">美股</option><option value="HK">港股</option></select>
+              </div>
+              <div class="form-group">
+                <label>類型</label>
+                <select id="tradeType" class="form-input"><option value="buy">買入</option><option value="sell">賣出</option></select>
+              </div>
+              <div class="form-group">
+                <label>數量</label>
+                <input type="number" id="tradeShares" class="form-input" step="1" min="1" placeholder="股數">
+              </div>
+              <div class="form-group">
+                <label>價格</label>
+                <input type="number" id="tradePrice" class="form-input" step="any" placeholder="自動獲取">
+                <small class="text-muted">留空將自動使用當前市場價格</small>
+              </div>
+              <button type="submit" class="btn btn-primary btn-block">提交訂單</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <div id="toastContainer"></div>
+</div>
+<script src="/static/js/main.js"></script>
+<script>
+let currentMarket = 'US';
+let stockData = {};
+
+async function loadStocksPage() {
+  const user = await apiGet('/auth/me');
+  if (!user.success) { window.location.href = '/'; return; }
+  document.getElementById('userDisplay').textContent = user.user.username;
+  loadStocks();
+  loadPortfolio();
+}
+
+async function loadStocks() {
+  const res = await apiGet(`/stocks/markets?market=${currentMarket}`);
+  if (!res.success) return;
+  stockData = res.stocks;
+  const tbody = document.getElementById('stockList');
+  let html = '';
+  for (const [sym, info] of Object.entries(res.stocks)) {
+    const changeClass = info.change >= 0 ? 'text-green' : 'text-red';
+    const changeIcon = info.change >= 0 ? '📈' : '📉';
+    html += `<tr>
+      <td class="fw-bold">${sym}</td>
+      <td>${info.name}</td>
+      <td class="fw-bold">$${info.price.toFixed(2)}</td>
+      <td class="${changeClass}">${changeIcon} ${info.change.toFixed(2)}%</td>
+      <td>
+        <button class="btn-sm btn-primary" onclick="fillTrade('${sym}','buy',${info.price},'${currentMarket}')">買</button>
+        <button class="btn-sm btn-danger" onclick="fillTrade('${sym}','sell',${info.price},'${currentMarket}')">賣</button>
+      </td>
+    </tr>`;
+  }
+  tbody.innerHTML = html;
+}
+
+function fillTrade(sym, type, price, market) {
+  document.getElementById('tradeSymbol').value = sym;
+  document.getElementById('tradeType').value = type;
+  document.getElementById('tradePrice').value = price;
+  document.getElementById('tradeMarket').value = market;
+  document.getElementById('tradeShares').focus();
+}
+
+function switchMarket(market) {
+  currentMarket = market;
+  document.getElementById('tabUS').className = market === 'US' ? 'tab-btn active' : 'tab-btn';
+  document.getElementById('tabHK').className = market === 'HK' ? 'tab-btn active' : 'tab-btn';
+  loadStocks();
+}
+
+async function loadPortfolio() {
+  const res = await apiGet('/stocks/portfolio');
+  if (!res.success) return;
+  const tbody = document.getElementById('portfolioList');
+  if (res.portfolio.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center">暫無持倉</td></tr>';
+    return;
+  }
+  let html = '';
+  for (const p of res.portfolio) {
+    const profitClass = p.profit >= 0 ? 'text-green' : 'text-red';
+    html += `<tr>
+      <td class="fw-bold">${p.symbol}</td>
+      <td>${p.shares}</td>
+      <td>$${p.avg_price.toFixed(2)}</td>
+      <td>$${p.current_price.toFixed(2)}</td>
+      <td class="${profitClass}">${p.profit >= 0 ? '+' : ''}${p.profit.toFixed(2)} (${p.profit_pct.toFixed(2)}%)</td>
+      <td><button class="btn-sm btn-danger" onclick="sellFromPortfolio('${p.symbol}','${p.market}',${p.current_price})">賣出</button></td>
+    </tr>`;
+  }
+  html += `<tr class="total-row"><td colspan="5"><strong>總值</strong></td><td><strong>$${res.total_value_usd.toFixed(2)}</strong></td></tr>`;
+  tbody.innerHTML = html;
+}
+
+function sellFromPortfolio(sym, market, price) {
+  document.getElementById('tradeSymbol').value = sym;
+  document.getElementById('tradeType').value = 'sell';
+  document.getElementById('tradePrice').value = price;
+  document.getElementById('tradeMarket').value = market;
+}
+
+document.getElementById('tradeForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const symbol = document.getElementById('tradeSymbol').value.toUpperCase();
+  const market = document.getElementById('tradeMarket').value;
+  const type = document.getElementById('tradeType').value;
+  const shares = parseFloat(document.getElementById('tradeShares').value);
+  let price = parseFloat(document.getElementById('tradePrice').value);
+  
+  if (!price && stockData[symbol]) price = stockData[symbol].price;
+  if (!price) { showToast('請輸入價格', 'error'); return; }
+  
+  const endpoint = type === 'buy' ? '/stocks/buy' : '/stocks/sell';
+  const res = await apiPost(endpoint, { symbol, market, shares, price });
+  showToast(res.message, res.success ? 'success' : 'error');
+  if (res.success) { loadPortfolio(); loadStocks(); }
+});
+
+loadStocksPage();
+setInterval(loadStocks, 15000);
+</script>
+</body>
+</html>

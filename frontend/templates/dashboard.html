@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>儀表板 - XE 平台</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+    <div class="animated-bg"></div>
+
+    <!-- Top Bar (Mobile) -->
+    <div class="topbar">
+        <button class="topbar-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+        <div style="font-weight:700;color:var(--gold);">XE 平台</div>
+        <span id="topbarUserName" style="font-size:0.85rem;color:var(--text-secondary);"></span>
+    </div>
+
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-logo">
+            <div class="logo-icon">XE</div>
+            <span class="logo-text">XE 平台</span>
+        </div>
+        <nav class="sidebar-menu">
+            <div class="sidebar-section-label">主要功能</div>
+            <a href="/dashboard" class="sidebar-link active"><span class="link-icon"><i class="fas fa-tachometer-alt"></i></span> 儀表板</a>
+            <a href="/mining" class="sidebar-link"><span class="link-icon"><i class="fas fa-gem"></i></span> 流量金挖掘</a>
+            <a href="/exchange" class="sidebar-link"><span class="link-icon"><i class="fas fa-exchange-alt"></i></span> 貨幣兌換</a>
+            <a href="/stocks" class="sidebar-link"><span class="link-icon"><i class="fas fa-chart-line"></i></span> 股票交易</a>
+            <a href="/crypto" class="sidebar-link"><span class="link-icon"><i class="fas fa-coins"></i></span> 加密貨幣</a>
+            <a href="/wallet" class="sidebar-link"><span class="link-icon"><i class="fas fa-wallet"></i></span> 錢包</a>
+            <a href="/deposit" class="sidebar-link"><span class="link-icon"><i class="fas fa-plus-circle"></i></span> 存款</a>
+            <a href="/withdraw" class="sidebar-link"><span class="link-icon"><i class="fas fa-university"></i></span> 提款</a>
+
+            <div class="sidebar-section-label">服務</div>
+            <a href="/kyc" class="sidebar-link"><span class="link-icon"><i class="fas fa-id-card"></i></span> KYC認證</a>
+            <a href="/tradebot" class="sidebar-link"><span class="link-icon"><i class="fas fa-robot"></i></span> 交易機械人</a>
+            <a href="/ledger" class="sidebar-link"><span class="link-icon"><i class="fas fa-book"></i></span> 公開賬本</a>
+            <a href="/transactions" class="sidebar-link"><span class="link-icon"><i class="fas fa-history"></i></span> 交易記錄</a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="sidebar-user-info">
+                <div class="user-avatar" id="sidebarUserAvatar">U</div>
+                <div>
+                    <div class="user-name" id="sidebarUserName">用戶</div>
+                    <a href="#" onclick="logout(); return false;" style="font-size:0.75rem;color:var(--text-muted);"><i class="fas fa-sign-out-alt"></i> 登出</a>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="page-header">
+            <h1><i class="fas fa-tachometer-alt" style="color:var(--gold);"></i> 儀表板</h1>
+            <p>歡迎回來，<span id="userName">用戶</span></p>
+        </div>
+
+        <!-- KYC Alert -->
+        <div id="kycAlert" class="card" style="display:none;border-color:rgba(245,158,11,0.3);margin-bottom:24px;">
+            <div class="flex items-center justify-between">
+                <div>
+                    <strong style="color:var(--warning);">&#26A0;&#FE0F; KYC 認證未完成</strong>
+                    <p style="color:var(--text-secondary);font-size:0.85rem;margin-top:4px;">完成 KYC 認證後才能進行提款操作</p>
+                </div>
+                <a href="/kyc" class="btn btn-warning btn-sm">立即認證</a>
+            </div>
+        </div>
+
+        <!-- Wallet Cards -->
+        <h3 class="mb-16"><i class="fas fa-wallet" style="color:var(--gold);"></i> 錢包餘額</h3>
+        <div class="wallet-grid">
+            <div class="wallet-card">
+                <div class="currency-icon">&#x1FA99;</div>
+                <div class="balance" id="tcBalance">0.0000</div>
+                <div class="currency-name">流量金 (TC)</div>
+                <div style="color:var(--success);font-size:0.85rem;" id="tcValue">= $0.00</div>
+            </div>
+            <div class="wallet-card">
+                <div class="currency-icon">&#x1F4B5;</div>
+                <div class="balance" id="usdBalance">$0.00</div>
+                <div class="currency-name">美金 (USD)</div>
+            </div>
+            <div class="wallet-card">
+                <div class="currency-icon">&#x1F3E6;</div>
+                <div class="balance" id="hkdBalance">HK$0.00</div>
+                <div class="currency-name">港幣 (HKD)</div>
+            </div>
+        </div>
+
+        <!-- Mining Stats -->
+        <h3 class="mb-16"><i class="fas fa-gem" style="color:var(--cyan);"></i> 挖礦統計</h3>
+        <div class="stats-grid">
+            <div class="card">
+                <div style="color:var(--text-secondary);font-size:0.85rem;">今日產出</div>
+                <div style="font-size:1.8rem;font-weight:700;color:var(--success);" id="todayEarnings">0.0000</div>
+                <div style="color:var(--text-muted);font-size:0.8rem;">TC</div>
+            </div>
+            <div class="card">
+                <div style="color:var(--text-secondary);font-size:0.85rem;">本週產出</div>
+                <div style="font-size:1.8rem;font-weight:700;color:var(--gold);" id="weekEarnings">0.0000</div>
+                <div style="color:var(--text-muted);font-size:0.8rem;">TC</div>
+            </div>
+            <div class="card">
+                <div style="color:var(--text-secondary);font-size:0.85rem;">每日預估產量</div>
+                <div style="font-size:1.8rem;font-weight:700;color:var(--cyan);" id="dailyRate">8,640</div>
+                <div style="color:var(--text-muted);font-size:0.8rem;">TC / 天</div>
+            </div>
+            <div class="card">
+                <div style="color:var(--text-secondary);font-size:0.85rem;">總共已挖礦</div>
+                <div style="font-size:1.8rem;font-weight:700;color:var(--gold);" id="totalMined">0.0000</div>
+                <div style="color:var(--text-muted);font-size:0.8rem;">TC</div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card mb-24">
+            <div class="card-header">
+                <span class="card-title"><i class="fas fa-bolt" style="color:var(--gold);"></i> 快速操作</span>
+            </div>
+            <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                <a href="/mining" class="btn btn-primary"><i class="fas fa-gem"></i> 開始挖礦</a>
+                <a href="/exchange" class="btn btn-secondary"><i class="fas fa-exchange-alt"></i> 兌換貨幣</a>
+                <a href="/stocks" class="btn btn-outline"><i class="fas fa-chart-line"></i> 股票交易</a>
+                <a href="/crypto" class="btn btn-outline"><i class="fas fa-coins"></i> 加密貨幣</a>
+                <a href="/kyc" class="btn btn-outline"><i class="fas fa-id-card"></i> KYC 認證</a>
+                <a href="/withdraw" class="btn btn-success"><i class="fas fa-university"></i> 提款</a>
+            </div>
+        </div>
+
+        <!-- KYC Status -->
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title"><i class="fas fa-lock" style="color:var(--gold);"></i> KYC 認證狀態</span>
+                <span id="kycStatusDisplay" class="status-badge status-pending">&#26A0;&#FE0F; 未認證</span>
+            </div>
+            <div>
+                <p style="color:var(--text-secondary);font-size:0.9rem;">完成 KYC 認證後即可：</p>
+                <ul style="color:var(--text-secondary);font-size:0.85rem;margin-top:8px;padding-left:20px;">
+                    <li>&#x2705; 提款到銀行帳戶（轉數快）</li>
+                    <li>&#x2705; 提款到 PayPal</li>
+                    <li>&#x2705; 提款到微信支付 / 支付寶</li>
+                    <li>&#x2705; 每日最高提款限額 $10,000 USD</li>
+                </ul>
+            </div>
+        </div>
+    </main>
+
+    <div id="toastContainer" class="toast-container"></div>
+    <script src="/static/js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const profile = await apiGet('/api/user/profile');
+                if (!profile) return;
+
+                const nameEl = document.getElementById('userName');
+                if (nameEl && profile.username) nameEl.textContent = profile.username;
+
+                // Wallet balances
+                const tcEl = document.getElementById('tcBalance');
+                const usdEl = document.getElementById('usdBalance');
+                const hkdEl = document.getElementById('hkdBalance');
+                const totalMinedEl = document.getElementById('totalMined');
+
+                if (tcEl && profile.wallet) tcEl.textContent = (profile.wallet.traffic_coin || 0).toFixed(4);
+                if (usdEl && profile.wallet) usdEl.textContent = formatCurrency(profile.wallet.usd || 0);
+                if (hkdEl && profile.wallet) hkdEl.textContent = formatCurrency(profile.wallet.hkd || 0, 'HKD');
+                if (totalMinedEl && profile.mining) totalMinedEl.textContent = (profile.mining.total_mined || 0).toFixed(4);
+
+                // Mining stats
+                try {
+                    const stats = await apiGet('/traffic-coin/stats');
+                    if (stats) {
+                        const todayEl = document.getElementById('todayEarnings');
+                        const weekEl = document.getElementById('weekEarnings');
+                        const dailyEl = document.getElementById('dailyRate');
+                        const tcValueEl = document.getElementById('tcValue');
+                        if (todayEl) todayEl.textContent = (stats.today_earnings || 0).toFixed(4);
+                        if (weekEl) weekEl.textContent = (stats.this_week_earnings || 0).toFixed(4);
+                        if (dailyEl) dailyEl.textContent = (stats.rate_per_day || 8640).toLocaleString();
+                        if (tcValueEl) tcValueEl.textContent = '= $' + (stats.usd_value || 0).toFixed(2);
+                    }
+                } catch(e) { console.error('Mining stats error:', e); }
+
+                // KYC status
+                try {
+                    const kycData = await apiGet('/kyc/status');
+                    const kycDisplay = document.getElementById('kycStatusDisplay');
+                    const kycAlert = document.getElementById('kycAlert');
+                    const statusText = {
+                        'verified': '\u2705 已認證',
+                        'pending': '\u23F3 審核中',
+                        'rejected': '\u274C 未通過',
+                        'not_started': '\u26A0\uFE0F 未認證'
+                    };
+                    if (kycData) {
+                        const status = kycData.kyc_status || 'not_started';
+                        if (kycDisplay) {
+                            kycDisplay.textContent = statusText[status] || '\u26A0\uFE0F 未認證';
+                            kycDisplay.className = status === 'verified' ? 'status-badge status-completed' : 'status-badge status-pending';
+                        }
+                        if (kycAlert && status === 'verified') kycAlert.style.display = 'none';
+                        if (kycAlert && status !== 'verified') kycAlert.style.display = 'block';
+                    }
+                } catch(e) { console.error('KYC error:', e); }
+
+            } catch(e) {
+                console.error('Dashboard load error:', e);
+            }
+        });
+    </script>
+</body>
+</html>

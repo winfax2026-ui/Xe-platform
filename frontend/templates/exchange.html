@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>貨幣兌換 - XE 平台</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="/" class="nav-logo"><div class="logo-icon">XE</div><span class="logo-text">XE 平台</span></a>
+            <div class="nav-links">
+                <a href="/dashboard">儀表板</a>
+                <a href="/wallet">💰 錢包</a>
+                <a href="/exchange" class="active">💱 兌換</a>
+                <a href="/stock-market">📈 股票</a>
+                <a href="/crypto-market">₿ 加密貨幣</a>
+                <a href="/withdraw">🏦 提款</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="page-container">
+        <div class="page-content">
+            <div class="page-header">
+                <h1>💱 貨幣兌換</h1>
+                <p>即時匯率，流量金 1:1 兌換美金</p>
+            </div>
+
+            <div class="grid-2">
+                <!-- Exchange Form -->
+                <div class="card">
+                    <div class="card-header"><span class="card-title">兌換</span></div>
+                    <form id="exchangeForm">
+                        <div class="form-group">
+                            <label class="form-label">從</label>
+                            <select class="form-select" id="fromCurrency">
+                                <option value="TC">🪙 流量金 (TC)</option>
+                                <option value="USD">💵 美金 (USD)</option>
+                                <option value="HKD">🏦 港幣 (HKD)</option>
+                                <option value="CNY">💰 人民幣 (CNY)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">金額</label>
+                            <input type="number" class="form-input" id="fromAmount" placeholder="輸入金額" step="0.01" min="0">
+                        </div>
+                        <div style="text-align:center;margin:12px 0;">
+                            <button type="button" id="swapBtn" class="btn btn-outline btn-sm"><i class="fas fa-arrows-alt-v"></i> 互換</button>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">到</label>
+                            <select class="form-select" id="toCurrency">
+                                <option value="USD">💵 美金 (USD)</option>
+                                <option value="HKD">🏦 港幣 (HKD)</option>
+                                <option value="TC">🪙 流量金 (TC)</option>
+                                <option value="CNY">💰 人民幣 (CNY)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">兌換結果</label>
+                            <div class="form-input" id="exchangeResult" style="background:var(--bg-card);font-weight:600;font-size:1.1rem;">
+                                請輸入金額
+                            </div>
+                        </div>
+                        <div id="exchangeRate" style="color:var(--text-secondary);font-size:0.85rem;margin-bottom:12px;">
+                            匯率: ---
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">
+                            <i class="fas fa-exchange-alt"></i> 確認兌換
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Live Rates -->
+                <div class="card">
+                    <div class="card-header"><span class="card-title">📊 即時匯率</span></div>
+                    <div id="ratesList"></div>
+                    <div style="margin-top:20px;padding:16px;background:rgba(16,185,129,0.1);border-radius:var(--radius-sm);">
+                        <strong style="color:var(--success);">🪙 1 流量金 = 1 USD（永久固定）</strong>
+                        <p style="color:var(--text-secondary);font-size:0.85rem;margin-top:8px;">
+                            流量金價值由 XE 平台擔保，1 TC 永遠等於 1 USD，可隨時兌換
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toastContainer" class="toast-container"></div>
+    <script src="/static/js/main.js"></script>
+    <script>
+        const exchangeForm = document.getElementById('exchangeForm');
+        const fromAmt = document.getElementById('fromAmount');
+        const fromCur = document.getElementById('fromCurrency');
+        const toCur = document.getElementById('toCurrency');
+        const result = document.getElementById('exchangeResult');
+        const rateDisplay = document.getElementById('exchangeRate');
+        
+        // Load rates
+        async function loadRates() {
+            const data = await fetch('/exchange/rates').then(r => r.json());
+            if (!data.rates) return;
+            
+            const ratesList = document.getElementById('ratesList');
+            ratesList.innerHTML = Object.entries(data.rates).map(([pair, rate]) => `
+                <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);">
+                    <span style="font-weight:600;">${pair.replace('_', '/')}</span>
+                    <span style="color:var(--success);">${rate.buy.toFixed(4)}</span>
+                </div>
+            `).join('');
+            
+            updateConversion();
+        }
+        
+        async function updateConversion() {
+            const amount = parseFloat(fromAmt.value);
+            if (!amount || amount <= 0) {
+                result.textContent = '請輸入金額';
+                result.style.color = 'var(--text-secondary)';
+                rateDisplay.textContent = '匯率: ---';
+                return;
+            }
+            
+            try {
+                const data = await fetch('/exchange/convert', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        from_currency: fromCur.value,
+                        to_currency: toCur.value,
+                        amount: amount
+                    })
+                }).then(r => r.json());
+                
+                if (data.to) {
+                    const symbols = {USD: '$', HKD: 'HK$', CNY: '¥', TC: ''};
+                    const prefix = symbols[data.to.currency] || '';
+                    result.textContent = `${prefix}${data.to.amount.toFixed(6)} ${data.to.currency}`;
+                    result.style.color = 'var(--success)';
+                    rateDisplay.textContent = `匯率: 1 ${data.from.currency} = ${data.rate} ${data.to.currency}`;
+                } else {
+                    result.textContent = data.error || '轉換失敗';
+                    result.style.color = 'var(--danger)';
+                }
+            } catch(e) {
+                result.textContent = '計算失敗';
+                result.style.color = 'var(--danger)';
+            }
+        }
+        
+        // Swap currencies
+        document.getElementById('swapBtn').addEventListener('click', () => {
+            const temp = fromCur.value;
+            fromCur.value = toCur.value;
+            toCur.value = temp;
+            updateConversion();
+        });
+        
+        // Execute exchange
+        exchangeForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const amount = parseFloat(fromAmt.value);
+            if (!amount || amount <= 0) {
+                showToast('請輸入有效金額', 'warning');
+                return;
+            }
+            
+            const btn = exchangeForm.querySelector('button[type="submit"]');
+            btn.disabled = true;
+            btn.textContent = '處理中...';
+            
+            try {
+                const data = await fetch('/exchange/execute', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        from_currency: fromCur.value,
+                        to_currency: toCur.value,
+                        amount: amount
+                    })
+                }).then(r => r.json());
+                
+                if (data.status === 'ok') {
+                    showToast(`✅ 兌換成功: ${data.from.amount} ${data.from.currency} → ${data.to.amount} ${data.to.currency}`, 'success');
+                    fromAmt.value = '';
+                    result.textContent = '請輸入金額';
+                    result.style.color = 'var(--text-secondary)';
+                    loadRates();
+                } else {
+                    showToast(data.error || '兌換失敗', 'error');
+                }
+            } catch(e) {
+                showToast(e.message || '兌換失敗', 'error');
+            }
+            
+            btn.disabled = false;
+            btn.textContent = '確認兌換';
+        });
+        
+        fromAmt.addEventListener('input', updateConversion);
+        fromCur.addEventListener('change', updateConversion);
+        toCur.addEventListener('change', updateConversion);
+        
+        document.addEventListener('DOMContentLoaded', loadRates);
+    </script>
+</body>
+</html>

@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KYC 認證 - XE 平台</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="/" class="nav-logo"><div class="logo-icon">XE</div><span class="logo-text">XE 平台</span></a>
+            <div class="nav-links">
+                <a href="/dashboard">儀表板</a>
+                <a href="/wallet">💰 錢包</a>
+                <a href="/kyc" class="active">🔐 KYC</a>
+                <a href="/withdraw">🏦 提款</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="page-container">
+        <div class="page-content">
+            <div class="page-header">
+                <h1>🔐 KYC 身份認證</h1>
+                <p>完成認證後即可提款到銀行帳戶、PayPal、微信支付等</p>
+            </div>
+
+            <div class="grid-2">
+                <!-- Step 1: Email Verification -->
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">📧 第一步：電郵驗證</span>
+                        <span id="emailStatus" class="status-badge status-pending">未驗證</span>
+                    </div>
+                    <p style="color:var(--text-secondary);font-size:0.9rem;margin-bottom:16px;">
+                        發送驗證碼到您的註冊電郵
+                    </p>
+                    <button id="sendEmailCode" class="btn btn-primary btn-block" onclick="sendEmailVerification()">
+                        <i class="fas fa-envelope"></i> 發送驗證碼
+                    </button>
+                    <div style="margin-top:12px;display:flex;gap:8px;">
+                        <input type="text" id="emailCode" class="form-input" placeholder="輸入驗證碼" maxlength="6" style="flex:1;">
+                        <button class="btn btn-success" onclick="verifyEmailCode()">驗證</button>
+                    </div>
+                </div>
+
+                <!-- Step 2: Identity Verification -->
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">🪪 第二步：身份認證</span>
+                        <span id="identityStatus" class="status-badge status-pending">未提交</span>
+                    </div>
+                    
+                    <form id="identityForm">
+                        <div class="form-group">
+                            <label class="form-label">姓名（與證件一致）</label>
+                            <input type="text" class="form-input" id="idFullName" placeholder="例如: 陳大明" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">出生日期</label>
+                            <input type="date" class="form-input" id="idDob">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">國籍</label>
+                            <select class="form-select" id="idNationality">
+                                <option value="Hong Kong">香港</option>
+                                <option value="China">中國</option>
+                                <option value="Taiwan">台灣</option>
+                                <option value="Macau">澳門</option>
+                                <option value="Other">其他</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">證件類型</label>
+                            <select class="form-select" id="idDocType">
+                                <option value="passport">護照</option>
+                                <option value="id_card">身份證</option>
+                                <option value="driving_license">駕駛執照</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">證件號碼</label>
+                            <input type="text" class="form-input" id="idDocNumber" placeholder="證件號碼" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">
+                            <i class="fas fa-check-circle"></i> 提交身份認證
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- KYC Status Overview -->
+            <div class="card" style="margin-top:20px;">
+                <div class="card-header">
+                    <span class="card-title">📊 KYC 進度</span>
+                </div>
+                <div style="display:flex;gap:24px;flex-wrap:wrap;">
+                    <div style="flex:1;min-width:200px;">
+                        <div style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:8px;">電郵驗證</div>
+                        <div style="height:10px;background:var(--border);border-radius:10px;overflow:hidden;">
+                            <div id="emailProgress" style="height:100%;width:0%;background:var(--success);border-radius:10px;transition:width 0.5s;"></div>
+                        </div>
+                    </div>
+                    <div style="flex:1;min-width:200px;">
+                        <div style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:8px;">身份認證</div>
+                        <div style="height:10px;background:var(--border);border-radius:10px;overflow:hidden;">
+                            <div id="identityProgress" style="height:100%;width:0%;background:var(--success);border-radius:10px;transition:width 0.5s;"></div>
+                        </div>
+                    </div>
+                    <div style="flex:1;min-width:200px;">
+                        <div style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:8px;">整體進度</div>
+                        <div style="height:10px;background:var(--border);border-radius:10px;overflow:hidden;">
+                            <div id="overallProgress" style="height:100%;width:0%;background:linear-gradient(90deg,var(--primary),var(--success));border-radius:10px;transition:width 0.5s;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KYC Benefits -->
+            <div class="grid-3" style="margin-top:20px;">
+                <div class="card" style="text-align:center;">
+                    <div style="font-size:2rem;margin-bottom:8px;">🏦</div>
+                    <h4>轉數快提款</h4>
+                    <p style="color:var(--text-secondary);font-size:0.85rem;">支援香港各大銀行即時到帳</p>
+                </div>
+                <div class="card" style="text-align:center;">
+                    <div style="font-size:2rem;margin-bottom:8px;">💳</div>
+                    <h4>PayPal 提款</h4>
+                    <p style="color:var(--text-secondary);font-size:0.85rem;">即時提款到 PayPal 帳戶</p>
+                </div>
+                <div class="card" style="text-align:center;">
+                    <div style="font-size:2rem;margin-bottom:8px;">🔗</div>
+                    <h4>公開認證</h4>
+                    <p style="color:var(--text-secondary);font-size:0.85rem;">您的 KYC 狀態可公開查詢</p>
+                </div>
+            </div>
+
+            <!-- Public KYC Verification -->
+            <div class="card" style="margin-top:20px;">
+                <div class="card-header">
+                    <span class="card-title">🔗 公開 KYC 認證查詢</span>
+                </div>
+                <p style="color:var(--text-secondary);font-size:0.9rem;margin-bottom:12px;">
+                    任何人都可以查詢用戶是否已通過 KYC 認證（不顯示個人資料）
+                </p>
+                <div style="display:flex;gap:8px;">
+                    <input type="text" id="publicVerifyUsername" class="form-input" placeholder="輸入用戶名查詢" style="flex:1;">
+                    <button class="btn btn-primary" onclick="publicVerify()">查詢</button>
+                </div>
+                <div id="publicVerifyResult" style="margin-top:12px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toastContainer" class="toast-container"></div>
+    <script src="/static/js/main.js"></script>
+    <script>
+        let kycData = {};
+        
+        // Load KYC status
+        async function loadKYCStatus() {
+            try {
+                kycData = await fetch('/kyc/status').then(r => r.json());
+                
+                const emailStatus = document.getElementById('emailStatus');
+                const identityStatus = document.getElementById('identityStatus');
+                
+                if (kycData.email_verified) {
+                    emailStatus.textContent = '✅ 已驗證';
+                    emailStatus.className = 'status-badge status-completed';
+                    document.getElementById('emailProgress').style.width = '100%';
+                }
+                
+                if (kycData.identity_verified) {
+                    identityStatus.textContent = '✅ 已認證';
+                    identityStatus.className = 'status-badge status-completed';
+                    document.getElementById('identityProgress').style.width = '100%';
+                }
+                
+                if (kycData.kyc_status === 'verified') {
+                    document.getElementById('overallProgress').style.width = '100%';
+                    document.querySelector('.card-header .card-title').textContent = '🎉 KYC 已通過';
+                } else if (kycData.email_verified) {
+                    document.getElementById('overallProgress').style.width = '50%';
+                }
+                
+                // Hide KYC warning on withdraw page if verified
+                if (kycData.kyc_status === 'verified') {
+                    const warning = document.getElementById('kycWithdrawWarning');
+                    if (warning) warning.style.display = 'none';
+                }
+                
+            } catch(e) {
+                console.error('KYC status error:', e);
+            }
+        }
+        
+        // Send email verification
+        async function sendEmailVerification() {
+            const btn = document.getElementById('sendEmailCode');
+            btn.disabled = true;
+            btn.textContent = '發送中...';
+            
+            try {
+                const data = await fetch('/kyc/send-email-verification', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'}
+                }).then(r => r.json());
+                
+                showToast(`✅ 驗證碼已發送到您的電郵`, 'success');
+                console.log('Debug - Verification code:', data.debug_code);
+            } catch(e) {
+                showToast(e.message || '發送失敗', 'error');
+            }
+            
+            btn.disabled = false;
+            btn.textContent = '重新發送驗證碼';
+        }
+        
+        // Verify email code
+        async function verifyEmailCode() {
+            const code = document.getElementById('emailCode').value;
+            if (!code) {
+                showToast('請輸入驗證碼', 'warning');
+                return;
+            }
+            
+            try {
+                const data = await fetch('/kyc/verify-email', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({code})
+                }).then(r => r.json());
+                
+                if (data.status === 'ok') {
+                    showToast('✅ 電郵驗證成功！', 'success');
+                    loadKYCStatus();
+                    if (data.kyc_status === 'verified') {
+                        showToast('🎉 KYC 全部通過！現在可以提款了！', 'success');
+                    }
+                } else {
+                    showToast(data.error || '驗證失敗', 'error');
+                }
+            } catch(e) {
+                showToast(e.message || '驗證失敗', 'error');
+            }
+        }
+        
+        // Submit identity
+        document.getElementById('identityForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const data = {
+                full_name: document.getElementById('idFullName').value,
+                date_of_birth: document.getElementById('idDob').value,
+                nationality: document.getElementById('idNationality').value,
+                document_type: document.getElementById('idDocType').value,
+                document_number: document.getElementById('idDocNumber').value
+            };
+            
+            const btn = e.target.querySelector('button[type="submit"]');
+            btn.disabled = true;
+            btn.textContent = '提交中...';
+            
+            try {
+                const result = await fetch('/kyc/submit-identity', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                }).then(r => r.json());
+                
+                if (result.status === 'ok') {
+                    showToast(result.message, 'success');
+                    loadKYCStatus();
+                } else {
+                    showToast(result.error || '提交失敗', 'error');
+                }
+            } catch(e) {
+                showToast(e.message || '提交失敗', 'error');
+            }
+            
+            btn.disabled = false;
+            btn.textContent = '提交身份認證';
+        });
+        
+        // Public verification lookup
+        async function publicVerify() {
+            const username = document.getElementById('publicVerifyUsername').value.trim();
+            if (!username) {
+                showToast('請輸入用戶名', 'warning');
+                return;
+            }
+            
+            try {
+                const data = await fetch('/kyc/public-verify/lookup', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({username})
+                }).then(r => r.json());
+                
+                const resultDiv = document.getElementById('publicVerifyResult');
+                resultDiv.innerHTML = `
+                    <div style="padding:16px;background:var(--bg-card);border-radius:var(--radius-sm);">
+                        <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+                            <span>用戶名</span>
+                            <span><strong>${data.username}</strong></span>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+                            <span>KYC 認證</span>
+                            <span>${data.kyc_verified ? '✅ 已認證' : '❌ 未認證'}</span>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+                            <span>電郵驗證</span>
+                            <span>${data.email_verified ? '✅ 已驗證' : '❌ 未驗證'}</span>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;">
+                            <span>加入日期</span>
+                            <span>${data.member_since}</span>
+                        </div>
+                        <div style="margin-top:12px;color:var(--text-muted);font-size:0.8rem;">
+                            ${data.note}
+                        </div>
+                    </div>
+                `;
+            } catch(e) {
+                document.getElementById('publicVerifyResult').innerHTML = `
+                    <div style="padding:16px;background:rgba(239,68,68,0.1);border-radius:var(--radius-sm);color:var(--danger);">
+                        用戶不存在
+                    </div>
+                `;
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', loadKYCStatus);
+    </script>
+</body>
+</html>

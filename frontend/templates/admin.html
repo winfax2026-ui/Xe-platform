@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>管理員後台 - XE平台</title>
+<link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+<div class="app-container">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">XE<small>版</small></div>
+    <nav class="sidebar-nav">
+      <a href="/dashboard"><span class="nav-icon">📊</span>儀表板</a>
+      <a href="/admin-panel" class="active"><span class="nav-icon">⚙️</span>管理後台</a>
+      <a href="/ledger"><span class="nav-icon">📜</span>公開賬本</a>
+    </nav>
+  </aside>
+  <main class="main-content">
+    <header class="topbar">
+      <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+      <h2>⚙️ 管理員後台</h2>
+      <div class="topbar-right"><span id="userDisplay">--</span> <button onclick="logout()" class="btn-sm btn-danger">登出</button></div>
+    </header>
+    <div class="content">
+      <!-- Stats -->
+      <div class="row" id="adminStats">
+        <div class="col-3"><div class="stat-card"><div class="stat-value" id="statUsers">--</div><div class="stat-label">👥 總用戶</div></div></div>
+        <div class="col-3"><div class="stat-card"><div class="stat-value" id="statKYC">--</div><div class="stat-label">✅ 已認證 KYC</div></div></div>
+        <div class="col-3"><div class="stat-card"><div class="stat-value" id="statPendingKYC">--</div><div class="stat-label">⏳ 待審核 KYC</div></div></div>
+        <div class="col-3"><div class="stat-card"><div class="stat-value" id="statMined">--</div><div class="stat-label">⛏️ 總挖掘 TC</div></div></div>
+      </div>
+
+      <!-- Invite Codes -->
+      <div class="card">
+        <h3>🔑 邀請碼管理</h3>
+        <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
+          <input type="text" id="newCode" class="form-input" style="width:200px;" placeholder="自訂邀請碼（可留空自動生成）" oninput="this.value=this.value.toUpperCase()">
+          <input type="number" id="codeMaxUses" class="form-input" style="width:100px;" value="100" min="1">
+          <button class="btn btn-primary" onclick="createInviteCode()">📌 生成邀請碼</button>
+        </div>
+        <div class="table-responsive" style="max-height:200px;overflow-y:auto;">
+          <table class="table" style="font-size:0.85rem;">
+            <thead><tr><th>邀請碼</th><th>已用 / 上限</th><th>狀態</th><th>創建時間</th></tr></thead>
+            <tbody id="inviteCodeList"><tr><td colspan="4" class="text-center text-muted">載入中...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- KYC Queue -->
+      <div class="card">
+        <h3>🆔 KYC 審核隊列</h3>
+        <div class="table-responsive">
+          <table class="table">
+            <thead><tr><th>ID</th><th>用戶名</th><th>電郵</th><th>真實姓名</th><th>身份證</th><th>操作</th></tr></thead>
+            <tbody id="kycQueue"><tr><td colspan="6" class="text-center text-muted">載入中...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- User List -->
+      <div class="card">
+        <h3>👥 用戶列表</h3>
+        <div style="margin-bottom:12px;">
+          <input type="text" id="userSearch" class="form-input" style="width:300px;" placeholder="搜尋用戶名/電郵..." oninput="filterUsers()">
+        </div>
+        <div class="table-responsive" style="max-height:400px;overflow-y:auto;">
+          <table class="table" style="font-size:0.85rem;">
+            <thead><tr><th>ID</th><th>用戶名</th><th>電郵</th><th>KYC</th><th>USD</th><th>TC</th><th>挖掘</th><th>註冊時間</th><th>操作</th></tr></thead>
+            <tbody id="userList"><tr><td colspan="9" class="text-center text-muted">載入中...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+  <div id="toastContainer"></div>
+</div>
+
+<!-- Balance Modal -->
+<div id="balanceModal" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeModal()">
+  <div class="modal" style="max-width:450px;" onclick="event.stopPropagation()">
+    <div class="modal-header"><h3>調整餘額</h3><button onclick="closeModal()" class="btn-sm btn-outline">✕</button></div>
+    <div class="modal-body">
+      <p id="modalUserInfo" class="text-muted"></p>
+      <div class="form-group">
+        <label>貨幣</label>
+        <select id="modalCurrency" class="form-input">
+          <option value="USD">USD</option>
+          <option value="HKD">HKD</option>
+          <option value="TC">TC</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>操作</label>
+        <select id="modalAction" class="form-input">
+          <option value="add">➕ 增加</option>
+          <option value="set">📝 設定為</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>金額</label>
+        <input type="number" id="modalAmount" class="form-input" step="0.01" min="0" placeholder="100">
+      </div>
+      <button class="btn btn-primary btn-block" onclick="executeBalanceUpdate()">確認</button>
+    </div>
+  </div>
+</div>
+
+<script src="/static/js/main.js"></script>
+<script>
+let allUsers = [];
+let modalUserId = null;
+
+async function loadAdmin() {
+  const user = await apiGet('/auth/me');
+  if (!user.success || !user.user.is_admin) {
+    showToast('管理員權限不足', 'error');
+    window.location.href = '/dashboard';
+    return;
+  }
+  document.getElementById('userDisplay').textContent = user.user.username;
+
+  loadStats();
+  loadInviteCodes();
+  loadUsers();
+}
+
+// ── Stats ──
+async function loadStats() {
+  const res = await apiGet('/admin/dashboard');
+  if (!res.success) return;
+  const s = res.stats;
+  document.getElementById('statUsers').textContent = s.total_users;
+  document.getElementById('statKYC').textContent = s.verified_kyc;
+  document.getElementById('statPendingKYC').textContent = s.pending_kyc;
+  document.getElementById('statMined').textContent = s.total_tc_mined;
+}
+
+// ── Invite Codes ──
+async function createInviteCode() {
+  const code = document.getElementById('newCode').value;
+  const maxUses = parseInt(document.getElementById('codeMaxUses').value) || 100;
+  const res = await apiPost('/admin/invite-codes', { code, max_uses: maxUses });
+  showToast(res.message, res.success ? 'success' : 'error');
+  if (res.success) {
+    document.getElementById('newCode').value = '';
+    loadInviteCodes();
+  }
+}
+
+async function loadInviteCodes() {
+  const res = await apiGet('/admin/invite-codes');
+  if (!res.success) return;
+  const tbody = document.getElementById('inviteCodeList');
+  tbody.innerHTML = res.invite_codes.map(c => `
+    <tr>
+      <td class="fw-bold" style="font-family:monospace;">${c.code}</td>
+      <td>${c.used_count} / ${c.max_uses}</td>
+      <td>${c.is_active ? '<span class="badge badge-success">✅ 啟用</span>' : '<span class="badge badge-danger">❌ 停用</span>'}</td>
+      <td style="font-size:0.75rem;">${new Date(c.created_at).toLocaleString('zh-HK')}</td>
+    </tr>
+  `).join('');
+}
+
+// ── Users ──
+async function loadUsers() {
+  const res = await apiGet('/admin/users');
+  if (!res.success) return;
+  allUsers = res.users;
+  renderUsers();
+}
+
+function filterUsers() {
+  renderUsers();
+}
+
+function renderUsers() {
+  const query = document.getElementById('userSearch').value.toLowerCase();
+  const tbody = document.getElementById('userList');
+
+  const filtered = allUsers.filter(u =>
+    u.username.toLowerCase().includes(query) || u.email.toLowerCase().includes(query)
+  );
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">無匹配用戶</td></tr>';
+    return;
+  }
+
+  const kycBadge = { verified: '✅', submitted: '⏳', pending: '⬜', rejected: '❌' };
+
+  // Separate KYC pending for the queue
+  const kycQueue = document.getElementById('kycQueue');
+  const pendingUsers = allUsers.filter(u => u.kyc_status === 'submitted');
+
+  if (pendingUsers.length === 0) {
+    kycQueue.innerHTML = '<tr><td colspan="6" class="text-center text-muted">無待審核 KYC</td></tr>';
+  } else {
+    kycQueue.innerHTML = pendingUsers.map(u => `
+      <tr>
+        <td>${u.id}</td>
+        <td>${u.username}</td>
+        <td class="text-muted">${u.email}</td>
+        <td>${u.kyc_real_name || '--'}</td>
+        <td style="font-family:monospace;">${u.kyc_id_number || '--'}</td>
+        <td>
+          <button class="btn-sm btn-success" onclick="approveKYC(${u.id})">✅ 通過</button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  tbody.innerHTML = filtered.map(u => `
+    <tr>
+      <td>${u.id}</td>
+      <td class="fw-bold">${u.username}</td>
+      <td class="text-muted" style="font-size:0.8rem;">${u.email}</td>
+      <td>${kycBadge[u.kyc_status] || '⬜'} ${u.kyc_status}</td>
+      <td>$${u.usd_balance.toFixed(2)}</td>
+      <td>${u.tc_balance.toFixed(4)}</td>
+      <td>${u.total_mined_tc.toFixed(2)}</td>
+      <td style="font-size:0.75rem;">${new Date(u.created_at).toLocaleString('zh-HK')}</td>
+      <td><button class="btn-sm btn-primary" onclick="openBalanceModal(${u.id},'${u.username}')">💰 調整</button></td>
+    </tr>
+  `).join('');
+}
+
+// ── KYC Approve ──
+async function approveKYC(userId) {
+  if (!confirm('確定通過此用戶嘅 KYC 認證？')) return;
+  const res = await apiPost(`/kyc/approve/${userId}`, {});
+  showToast(res.message, res.success ? 'success' : 'error');
+  if (res.success) loadUsers();
+}
+
+// ── Balance Modal ──
+function openBalanceModal(userId, username) {
+  modalUserId = userId;
+  document.getElementById('modalUserInfo').textContent = `調整用戶: ${username} (ID: ${userId})`;
+  document.getElementById('balanceModal').style.display = 'flex';
+}
+
+function closeModal() {
+  document.getElementById('balanceModal').style.display = 'none';
+  modalUserId = null;
+}
+
+async function executeBalanceUpdate() {
+  if (!modalUserId) return;
+  const currency = document.getElementById('modalCurrency').value;
+  const action = document.getElementById('modalAction').value;
+  const amount = parseFloat(document.getElementById('modalAmount').value);
+  if (!amount || amount <= 0) { showToast('請輸入有效金額', 'error'); return; }
+
+  const res = await apiPost(`/admin/user/${modalUserId}/balance`, { currency, action, amount });
+  showToast(res.message, res.success ? 'success' : 'error');
+  if (res.success) { closeModal(); loadUsers(); }
+}
+
+loadAdmin();
+setInterval(loadStats, 30000);
+</script>
+</body>
+</html>

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>交易記錄 - XE平台</title>
+<link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+<div class="app-container">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">XE<small>版</small></div>
+    <nav class="sidebar-nav">
+      <a href="/dashboard"><span class="nav-icon">📊</span>儀表板</a>
+      <a href="/mining"><span class="nav-icon">⛏️</span>流量金挖掘</a>
+      <a href="/exchange-page"><span class="nav-icon">🔄</span>貨幣兌換</a>
+      <a href="/stocks-page"><span class="nav-icon">📈</span>股票交易</a>
+      <a href="/crypto-page"><span class="nav-icon">₿</span>加密貨幣</a>
+      <a href="/wallet"><span class="nav-icon">👛</span>錢包</a>
+      <a href="/deposit"><span class="nav-icon">📥</span>存款</a>
+      <a href="/withdraw"><span class="nav-icon">📤</span>提款</a>
+      <a href="/kyc-page"><span class="nav-icon">🆔</span>KYC認證</a>
+      <a href="/tradebot-page"><span class="nav-icon">🤖</span>交易機械人</a>
+      <a href="/ledger"><span class="nav-icon">📜</span>公開賬本</a>
+      <a href="/transactions" class="active"><span class="nav-icon">🧾</span>交易記錄</a>
+    </nav>
+  </aside>
+  <main class="main-content">
+    <header class="topbar">
+      <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+      <h2>🧾 交易記錄</h2>
+      <div class="topbar-right"><span id="userDisplay">--</span> <button onclick="logout()" class="btn-sm btn-danger">登出</button></div>
+    </header>
+    <div class="content">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+          <h3 style="margin:0;">所有交易</h3>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <select id="filterType" class="form-input" style="width:auto;padding:6px 12px;" onchange="loadTransactions()">
+              <option value="">全部類型</option>
+              <option value="mine">⛏️ 挖掘</option>
+              <option value="deposit">📥 存款</option>
+              <option value="withdraw">📤 提款</option>
+              <option value="exchange">🔄 兌換</option>
+              <option value="trade">📈 交易</option>
+              <option value="bonus">🎁 獎金</option>
+              <option value="referral">👥 推薦</option>
+            </select>
+            <select id="filterStatus" class="form-input" style="width:auto;padding:6px 12px;" onchange="loadTransactions()">
+              <option value="">全部狀態</option>
+              <option value="confirmed">✅ 成功</option>
+              <option value="pending">⏳ 待處理</option>
+              <option value="failed">❌ 失敗</option>
+            </select>
+            <button class="btn btn-outline btn-sm" onclick="loadTransactions()">🔄 刷新</button>
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table class="table" id="txTable">
+            <thead><tr><th>哈希</th><th>類型</th><th>貨幣</th><th>金額</th><th>手續費</th><th>狀態</th><th>描述</th><th>時間</th></tr></thead>
+            <tbody id="txBody"><tr><td colspan="8" class="text-center">載入中...</td></tr></tbody>
+          </table>
+        </div>
+        <div id="txEmpty" style="display:none;text-align:center;padding:40px;color:var(--text-secondary);">
+          <div style="font-size:3rem;margin-bottom:12px;">📭</div>
+          <div>暫無交易記錄</div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <div id="toastContainer"></div>
+</div>
+<script src="/static/js/main.js"></script>
+<script>
+let allTx = [];
+
+async function loadTransactions() {
+  const user = await apiGet('/auth/me');
+  if (!user.success) { window.location.href = '/'; return; }
+  document.getElementById('userDisplay').textContent = user.user.username;
+
+  const filterType = document.getElementById('filterType').value;
+  const filterStatus = document.getElementById('filterStatus').value;
+
+  // Get transactions from user endpoint - we use a client-side filter
+  // The display uses data from /auth/me and the transaction tables
+  // Since there's no dedicated /transactions/list endpoint, let's show the broadcast ledger
+  try {
+    const res = await apiGet('/payment/broadcast-ledger?per_page=100');
+    const tbody = document.getElementById('txBody');
+    const empty = document.getElementById('txEmpty');
+
+    if (!res.success || res.entries.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">暫無交易</td></tr>';
+      return;
+    }
+
+    let entries = res.entries;
+    if (filterType) entries = entries.filter(e => e.type === filterType);
+    if (filterStatus) entries = entries.filter(e => e.status === filterStatus);
+
+    if (entries.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">無符合條件嘅記錄</td></tr>';
+      return;
+    }
+
+    const typeIcons = { mine: '⛏️', deposit: '📥', withdraw: '📤', exchange: '🔄', trade: '📈', bonus: '🎁', referral: '👥', kyc_verified: '🆔' };
+    const statusBadges = { confirmed: '<span class="badge badge-success">✅ 成功</span>', pending: '<span class="badge badge-warning">⏳ 待處理</span>', failed: '<span class="badge badge-danger">❌ 失敗</span>' };
+
+    tbody.innerHTML = entries.slice(0, 200).map(tx => `
+      <tr>
+        <td style="font-family:monospace;font-size:0.75rem;">${tx.tx_hash.slice(0,12)}...</td>
+        <td>${typeIcons[tx.type] || '📄'} ${tx.type}</td>
+        <td>${tx.currency}</td>
+        <td class="fw-bold">${tx.amount}</td>
+        <td class="text-muted">--</td>
+        <td>${statusBadges[tx.status] || tx.status}</td>
+        <td class="text-muted" style="font-size:0.8rem;">${tx.username}</td>
+        <td style="font-size:0.75rem;">${new Date(tx.time).toLocaleString('zh-HK')}</td>
+      </tr>
+    `).join('');
+  } catch(e) {
+    document.getElementById('txBody').innerHTML = '<tr><td colspan="8" class="text-center text-danger">載入失敗</td></tr>';
+  }
+}
+
+// Auto-refresh every 30 seconds
+loadTransactions();
+setInterval(loadTransactions, 30000);
+</script>
+</body>
+</html>

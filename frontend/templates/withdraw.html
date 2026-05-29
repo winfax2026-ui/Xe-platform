@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>提款 - XE平台</title>
+<link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+<div class="app-container">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">XE<small>版</small></div>
+    <nav class="sidebar-nav">
+      <a href="/dashboard"><span class="nav-icon">📊</span>儀表板</a>
+      <a href="/mining"><span class="nav-icon">⛏️</span>流量金挖掘</a>
+      <a href="/exchange-page"><span class="nav-icon">🔄</span>貨幣兌換</a>
+      <a href="/stocks-page"><span class="nav-icon">📈</span>股票交易</a>
+      <a href="/crypto-page"><span class="nav-icon">₿</span>加密貨幣</a>
+      <a href="/wallet"><span class="nav-icon">👛</span>錢包</a>
+      <a href="/deposit"><span class="nav-icon">📥</span>存款</a>
+      <a href="/withdraw" class="active"><span class="nav-icon">📤</span>提款</a>
+      <a href="/kyc-page"><span class="nav-icon">🆔</span>KYC認證</a>
+      <a href="/tradebot-page"><span class="nav-icon">🤖</span>交易機械人</a>
+      <a href="/ledger"><span class="nav-icon">📜</span>公開賬本</a>
+      <a href="/transactions"><span class="nav-icon">🧾</span>交易記錄</a>
+    </nav>
+  </aside>
+  <main class="main-content">
+    <header class="topbar">
+      <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+      <h2>🏦 提款中心</h2>
+      <div class="topbar-right">
+        <span id="userDisplay">--</span>
+        <button onclick="logout()" class="btn-sm btn-danger">登出</button>
+      </div>
+    </header>
+    <div class="content">
+
+      <!-- KYC Warning -->
+      <div id="kycWarning" class="card" style="border-color:var(--warning);display:none;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span style="font-size:2rem;">⚠️</span>
+          <div>
+            <strong>需要完成 KYC 認證先可以提款</strong>
+            <p style="color:var(--text-secondary);margin:4px 0 0;font-size:0.9rem;">為咗保障您嘅資金安全，提款前必須完成身份驗證。</p>
+            <a href="/kyc-page" class="btn btn-primary btn-sm" style="margin-top:8px;">前往 KYC 認證</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <!-- Left: Withdrawal Form -->
+        <div class="col-7">
+          <div class="card">
+            <h3>📤 提交提款</h3>
+            <form id="withdrawForm">
+              <div class="row">
+                <div class="col-6">
+                  <div class="form-group">
+                    <label>提款貨幣</label>
+                    <select id="wCurrency" class="form-input" onchange="updateEstimate()">
+                      <option value="USD">💵 美金 (USD)</option>
+                      <option value="HKD">🏦 港幣 (HKD)</option>
+                      <option value="TC" selected>🪙 流量金 (TC) 1:1 USD</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="col-6">
+                  <div class="form-group">
+                    <label>提款金額</label>
+                    <input type="number" id="wAmount" class="form-input" step="0.01" min="1" placeholder="例如 100" oninput="updateEstimate()">
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>提款方式</label>
+                <div class="method-grid" id="methodGrid">
+                  <div class="method-card active" data-method="fps" onclick="selectMethod('fps')">
+                    <div class="method-icon">🏦</div>
+                    <div class="method-name">轉數快 FPS</div>
+                    <div class="method-desc">香港銀行即時到帳</div>
+                  </div>
+                  <div class="method-card" data-method="paypal" onclick="selectMethod('paypal')">
+                    <div class="method-icon">💳</div>
+                    <div class="method-name">PayPal</div>
+                    <div class="method-desc">全球即時轉帳</div>
+                  </div>
+                  <div class="method-card" data-method="wechat" onclick="selectMethod('wechat')">
+                    <div class="method-icon">💚</div>
+                    <div class="method-name">微信支付 HK</div>
+                    <div class="method-desc">香港微信轉帳</div>
+                  </div>
+                  <div class="method-card" data-method="alipay" onclick="selectMethod('alipay')">
+                    <div class="method-icon">🔵</div>
+                    <div class="method-name">支付寶 HK</div>
+                    <div class="method-desc">香港支付寶轉帳</div>
+                  </div>
+                  <div class="method-card" data-method="crypto" onclick="selectMethod('crypto')">
+                    <div class="method-icon">₿</div>
+                    <div class="method-name">加密貨幣</div>
+                    <div class="method-desc">BTC/ETH/USDT</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- FPS Fields -->
+              <div id="fpsFields" class="method-fields">
+                <div class="row">
+                  <div class="col-4">
+                    <div class="form-group">
+                      <label>銀行代碼</label>
+                      <select id="fpsBankCode" class="form-input" onchange="updateBankName()">
+                        <option value="">選擇銀行</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="col-8">
+                    <div class="form-group">
+                      <label>收款銀行</label>
+                      <div id="fpsBankDisplay" class="preview-text" style="padding:10px 12px;background:var(--bg-card);border-radius:8px;">請選擇銀行</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-6">
+                    <div class="form-group">
+                      <label>帳戶號碼</label>
+                      <input type="text" id="fpsAccount" class="form-input" placeholder="銀行帳戶號碼">
+                    </div>
+                  </div>
+                  <div class="col-6">
+                    <div class="form-group">
+                      <label>帳戶名稱（收款人）</label>
+                      <input type="text" id="fpsName" class="form-input" placeholder="e.g. CHAN TAI MAN">
+                    </div>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>或者用 FPS 電郵</label>
+                  <input type="email" id="fpsEmail" class="form-input" placeholder="your@email.com（可留空用銀行帳戶）">
+                </div>
+              </div>
+
+              <!-- PayPal Fields -->
+              <div id="paypalFields" class="method-fields" style="display:none;">
+                <div class="form-group">
+                  <label>PayPal 電郵地址</label>
+                  <input type="email" id="paypalEmail" class="form-input" placeholder="your@paypal.com" required>
+                  <small class="text-muted">手續費: $2 USD（固定費用）</small>
+                </div>
+              </div>
+
+              <!-- WeChat Fields -->
+              <div id="wechatFields" class="method-fields" style="display:none;">
+                <div class="form-group">
+                  <label>微信支付 HK 電話號碼</label>
+                  <input type="tel" id="wechatPhone" class="form-input" placeholder="+852 或 大陸手機號" required>
+                </div>
+              </div>
+
+              <!-- Alipay Fields -->
+              <div id="alipayFields" class="method-fields" style="display:none;">
+                <div class="form-group">
+                  <label>支付寶 HK 帳戶</label>
+                  <input type="text" id="alipayAccount" class="form-input" placeholder="支付寶帳號 / 電郵 / 電話" required>
+                </div>
+              </div>
+
+              <!-- Crypto Fields -->
+              <div id="cryptoFields" class="method-fields" style="display:none;">
+                <div class="row">
+                  <div class="col-4">
+                    <div class="form-group">
+                      <label>貨幣</label>
+                      <select id="cryptoCurrency" class="form-input">
+                        <option value="USDT">USDT</option>
+                        <option value="BTC">BTC</option>
+                        <option value="ETH">ETH</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="col-4">
+                    <div class="form-group">
+                      <label>網絡</label>
+                      <select id="cryptoNetwork" class="form-input">
+                        <option value="TRC20">TRC20（推薦）</option>
+                        <option value="BEP20">BEP20</option>
+                        <option value="ERC20">ERC20</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="col-4">
+                    <div class="form-group">
+                      <label>手續費</label>
+                      <div class="preview-text" style="padding:10px 12px;">$1 USD</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>錢包地址</label>
+                  <input type="text" id="cryptoAddress" class="form-input" placeholder="輸入接收錢包地址" required>
+                </div>
+              </div>
+
+              <!-- Estimate -->
+              <div id="estimateBox" class="card" style="margin-top:16px;background:var(--bg-card);">
+                <div style="display:flex;justify-content:space-between;padding:6px 0;">
+                  <span class="text-muted">提款金額</span>
+                  <span id="estGross" class="fw-bold">$0.00</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;padding:6px 0;">
+                  <span class="text-muted">手續費</span>
+                  <span id="estFee" style="color:var(--danger);">$0.00</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;padding:6px 0;">
+                  <span class="text-muted">匯率 (USD→HKD)</span>
+                  <span id="estRate">--</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;padding:8px 0 4px;border-top:1px solid var(--border);margin-top:4px;">
+                  <span style="font-size:1.1rem;font-weight:700;">預計到帳</span>
+                  <span id="estNet" style="font-size:1.2rem;font-weight:700;color:var(--success);">$0.00</span>
+                </div>
+              </div>
+
+              <!-- Balance Display -->
+              <div style="display:flex;gap:16px;margin:12px 0;font-size:0.85rem;">
+                <span>💵 USD: <strong id="balUSD">0.00</strong></span>
+                <span>🏦 HKD: <strong id="balHKD">0.00</strong></span>
+                <span>🪙 TC: <strong id="balTC">0.00</strong></span>
+              </div>
+
+              <!-- Verification Code Button -->
+              <button type="button" id="sendCodeBtn" class="btn btn-outline btn-block" onclick="sendVerificationCode()">
+                📧 發送驗證碼到電郵
+              </button>
+
+              <!-- Verification Code Input -->
+              <div id="codeSection" style="display:none;margin-top:12px;">
+                <div class="row">
+                  <div class="col-8">
+                    <input type="text" id="verifyCode" class="form-input" placeholder="輸入 6 位數驗證碼" maxlength="6" style="text-align:center;font-size:1.5rem;letter-spacing:8px;">
+                  </div>
+                  <div class="col-4">
+                    <button type="submit" id="submitBtn" class="btn btn-success btn-block" style="height:100%;font-size:1rem;">
+                      ✅ 確認提款
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Right: Info & History -->
+        <div class="col-5">
+          <!-- Daily Limit -->
+          <div class="card">
+            <h3>📋 每日限額</h3>
+            <div style="margin:8px 0;">
+              <div style="display:flex;justify-content:space-between;">
+                <span>今日已用</span>
+                <span id="usedLimit">$0.00</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;margin-top:8px;">
+                <span>剩餘限額</span>
+                <span id="remainLimit" style="color:var(--success);font-weight:700;">$50,000.00</span>
+              </div>
+              <div style="background:var(--bg-card);height:8px;border-radius:4px;margin-top:8px;overflow:hidden;">
+                <div id="limitBar" style="height:100%;background:linear-gradient(90deg,var(--primary),var(--accent));width:0%;border-radius:4px;transition:width 0.3s;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- KYC Status -->
+          <div class="card">
+            <h3>🆔 KYC 狀態</h3>
+            <div id="kycStatusDisplay">
+              <span class="badge badge-warning">檢查中...</span>
+            </div>
+          </div>
+
+          <!-- Quick Tips -->
+          <div class="card">
+            <h3>💡 提款小貼士</h3>
+            <ul style="padding-left:16px;color:var(--text-secondary);font-size:0.85rem;line-height:1.8;">
+              <li>提款前請確保已通過 KYC 認證</li>
+              <li>FPS 轉數快：即時到帳，免手續費</li>
+              <li>PayPal：固定 $2 USD 手續費</li>
+              <li>每日最高提款限額：$50,000 USD</li>
+              <li>所有提款都會記錄喺公開賬本</li>
+              <li>提款後會收到電郵確認通知</li>
+            </ul>
+          </div>
+
+          <!-- History -->
+          <div class="card">
+            <h3>📜 提款記錄</h3>
+            <div class="table-responsive" style="max-height:300px;overflow-y:auto;">
+              <table class="table" style="font-size:0.8rem;">
+                <thead><tr><th>金額</th><th>方式</th><th>狀態</th><th>時間</th></tr></thead>
+                <tbody id="historyBody">
+                  <tr><td colspan="4" class="text-center text-muted">載入中...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <div id="toastContainer"></div>
+</div>
+<script src="/static/js/main.js"></script>
+<script>
+let withdrawInfo = {};
+let selectedMethod = 'fps';
+let codeSent = false;
+
+// ── Load Everything ──
+async function loadWithdrawPage() {
+  const user = await apiGet('/auth/me');
+  if (!user.success) { window.location.href = '/'; return; }
+  document.getElementById('userDisplay').textContent = user.user.username;
+
+  const info = await apiGet('/payment/withdraw/info');
+  if (!info.success) return;
+  withdrawInfo = info;
+
+  // KYC
+  const kycWarning = document.getElementById('kycWarning');
+  const kycStatus = document.getElementById('kycStatusDisplay');
+  if (info.kyc_verified) {
+    kycWarning.style.display = 'none';
+    kycStatus.innerHTML = '<span class="badge badge-success">✅ 已認證</span>';
+  } else {
+    kycWarning.style.display = 'block';
+    kycStatus.innerHTML = '<span class="badge badge-warning">⚠️ 未認證</span>';
+  }
+
+  // Balances
+  document.getElementById('balUSD').textContent = formatCurrency(info.balances.USD);
+  document.getElementById('balHKD').textContent = formatCurrency(info.balances.HKD);
+  document.getElementById('balTC').textContent = info.balances.TC.toFixed(4);
+
+  // Limit
+  document.getElementById('usedLimit').textContent = '$' + info.limits.withdrawn_today.toFixed(2);
+  document.getElementById('remainLimit').textContent = '$' + info.limits.remaining_today.toFixed(2);
+  const pct = Math.min((info.limits.withdrawn_today / info.limits.daily_max) * 100, 100);
+  document.getElementById('limitBar').style.width = pct + '%';
+
+  // Banks
+  const bankSelect = document.getElementById('fpsBankCode');
+  bankSelect.innerHTML = '<option value="">選擇銀行</option>';
+  info.banks.forEach(b => {
+    bankSelect.innerHTML += `<option value="${b.code}">[${b.code}] ${b.name}</option>`;
+  });
+
+  // History
+  loadHistory();
+}
+
+function updateBankName() {
+  const code = document.getElementById('fpsBankCode').value;
+  const display = document.getElementById('fpsBankDisplay');
+  if (code && withdrawInfo.banks) {
+    const bank = withdrawInfo.banks.find(b => b.code === code);
+    display.textContent = bank ? `🏦 ${bank.name}` : '--';
+    display.style.color = 'var(--text)';
+  } else {
+    display.textContent = '請選擇銀行';
+    display.style.color = 'var(--text-secondary)';
+  }
+  updateEstimate();
+}
+
+// ── Method Selection ──
+function selectMethod(method) {
+  selectedMethod = method;
+  document.querySelectorAll('.method-card').forEach(c => c.classList.remove('active'));
+  document.querySelector(`.method-card[data-method="${method}"]`).classList.add('active');
+
+  // Show/hide fields
+  ['fpsFields','paypalFields','wechatFields','alipayFields','cryptoFields'].forEach(id => {
+    document.getElementById(id).style.display = id.startsWith(method) ? 'block' : 'none';
+  });
+  updateEstimate();
+}
+
+// ── Estimate ──
+async function updateEstimate() {
+  const currency = document.getElementById('wCurrency').value;
+  const amount = parseFloat(document.getElementById('wAmount').value) || 0;
+
+  if (amount <= 0) {
+    document.getElementById('estGross').textContent = '$0.00';
+    document.getElementById('estFee').textContent = '$0.00';
+    document.getElementById('estNet').textContent = '$0.00';
+    return;
+  }
+
+  // Local estimate for instant feedback
+  let usdValue = amount;
+  if (currency === 'TC') usdValue = amount;
+  else if (currency === 'HKD') usdValue = amount / (withdrawInfo.rates?.USD_to_HKD || 7.82);
+
+  const feeMap = {fps:0, paypal:2, wechat:0, alipay:0, crypto:1};
+  const fee = feeMap[selectedMethod] || 0;
+  const net = usdValue - fee;
+
+  document.getElementById('estGross').textContent = '$' + usdValue.toFixed(2) + ' USD';
+  document.getElementById('estFee').textContent = fee > 0 ? '$' + fee.toFixed(2) + ' USD' : '免費';
+  document.getElementById('estRate').textContent = '1 USD = ' + (withdrawInfo.rates?.USD_to_HKD || 7.82).toFixed(2) + ' HKD';
+
+  let netDisplay = '$' + net.toFixed(2) + ' USD';
+  if (['fps','wechat','alipay'].includes(selectedMethod)) {
+    const hkd = net * (withdrawInfo.rates?.USD_to_HKD || 7.82);
+    netDisplay = 'HK$' + hkd.toFixed(2);
+  }
+  document.getElementById('estNet').textContent = net > 0 ? netDisplay : '$0.00';
+}
+
+// ── Send Verification Code ──
+async function sendVerificationCode() {
+  if (!withdrawInfo.kyc_verified) {
+    showToast('請先完成 KYC 認證', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('sendCodeBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ 發送中...';
+
+  const res = await apiPost('/payment/withdraw/send-code', {});
+  btn.disabled = false;
+
+  if (res.success) {
+    codeSent = true;
+    document.getElementById('codeSection').style.display = 'flex';
+    btn.textContent = '✅ 已發送驗證碼';
+    btn.style.borderColor = 'var(--success)';
+
+    if (res.sandbox_code) {
+      document.getElementById('verifyCode').placeholder = '沙箱: ' + res.sandbox_code;
+    }
+
+    showToast(res.message, 'success');
+    document.getElementById('verifyCode').focus();
+  } else {
+    btn.textContent = '📧 重新發送驗證碼';
+    showToast(res.message, 'error');
+  }
+}
+
+// ── Submit Withdrawal ──
+document.getElementById('withdrawForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const code = document.getElementById('verifyCode').value.trim();
+  if (!code || code.length < 6) {
+    showToast('請輸入驗證碼', 'error');
+    return;
+  }
+  if (!codeSent) {
+    showToast('請先發送驗證碼', 'error');
+    return;
+  }
+
+  const currency = document.getElementById('wCurrency').value;
+  const amount = parseFloat(document.getElementById('wAmount').value);
+  if (!amount || amount <= 0) {
+    showToast('請輸入有效金額', 'error');
+    return;
+  }
+
+  const payload = { code, method: selectedMethod, amount, currency };
+
+  if (selectedMethod === 'fps') {
+    payload.bank_code = document.getElementById('fpsBankCode').value;
+    payload.account_number = document.getElementById('fpsAccount').value;
+    payload.account_name = document.getElementById('fpsName').value;
+    payload.email = document.getElementById('fpsEmail').value;
+    if (!payload.bank_code && !payload.email) {
+      showToast('請選擇銀行或輸入 FPS 電郵', 'error'); return;
+    }
+    if (!payload.account_number && !payload.email) {
+      showToast('請輸入銀行帳戶號碼', 'error'); return;
+    }
+  } else if (selectedMethod === 'paypal') {
+    payload.paypal_email = document.getElementById('paypalEmail').value;
+    if (!payload.paypal_email) { showToast('請輸入 PayPal 電郵', 'error'); return; }
+  } else if (selectedMethod === 'wechat') {
+    payload.wechat_phone = document.getElementById('wechatPhone').value;
+    if (!payload.wechat_phone) { showToast('請輸入微信電話', 'error'); return; }
+  } else if (selectedMethod === 'alipay') {
+    payload.alipay_account = document.getElementById('alipayAccount').value;
+    if (!payload.alipay_account) { showToast('請輸入支付寶帳戶', 'error'); return; }
+  } else if (selectedMethod === 'crypto') {
+    payload.crypto_currency = document.getElementById('cryptoCurrency').value;
+    payload.network = document.getElementById('cryptoNetwork').value;
+    payload.wallet_address = document.getElementById('cryptoAddress').value;
+    if (!payload.wallet_address) { showToast('請輸入錢包地址', 'error'); return; }
+  }
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ 處理中...';
+
+  const res = await apiPost('/payment/withdraw/verify-and-execute', payload);
+
+  if (res.success) {
+    showToast(res.message, 'success');
+    // Refresh page
+    loadWithdrawPage();
+    document.getElementById('codeSection').style.display = 'none';
+    document.getElementById('sendCodeBtn').textContent = '📧 發送驗證碼到電郵';
+    codeSent = false;
+    document.getElementById('wAmount').value = '';
+    updateEstimate();
+  } else {
+    showToast(res.message, 'error');
+  }
+
+  btn.disabled = false;
+  btn.textContent = '✅ 確認提款';
+});
+
+// ── History ──
+async function loadHistory() {
+  const res = await apiGet('/payment/withdraw/history');
+  if (!res.success) return;
+  const tbody = document.getElementById('historyBody');
+  if (res.withdrawals.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">暫無提款記錄</td></tr>';
+    return;
+  }
+  const statusMap = { confirmed: '✅ 成功', pending: '⏳ 處理中', failed: '❌ 失敗' };
+  tbody.innerHTML = res.withdrawals.slice(0, 15).map(w => `
+    <tr>
+      <td>${w.amount_local} ${w.currency}</td>
+      <td>${w.method.toUpperCase()}</td>
+      <td>${statusMap[w.status] || w.status}</td>
+      <td style="font-size:0.75rem;">${new Date(w.created_at).toLocaleString('zh-HK')}</td>
+    </tr>
+  `).join('');
+}
+
+loadWithdrawPage();
+setInterval(loadHistory, 30000);
+</script>
+</body>
+</html>

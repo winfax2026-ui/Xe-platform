@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>公開賬本 - XE 平台</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+    <div class="animated-bg"></div>
+
+    <!-- Top Bar (Mobile) -->
+    <div class="topbar">
+        <button class="topbar-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+        <div style="font-weight:700;color:var(--gold);">XE 平台</div>
+        <span id="topbarUserName" style="font-size:0.85rem;color:var(--text-secondary);"></span>
+    </div>
+
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-logo">
+            <div class="logo-icon">XE</div>
+            <span class="logo-text">XE 平台</span>
+        </div>
+        <nav class="sidebar-menu">
+            <div class="sidebar-section-label">主要功能</div>
+            <a href="/dashboard" class="sidebar-link"><span class="link-icon"><i class="fas fa-tachometer-alt"></i></span> 儀表板</a>
+            <a href="/mining" class="sidebar-link"><span class="link-icon"><i class="fas fa-gem"></i></span> 流量金挖掘</a>
+            <a href="/exchange" class="sidebar-link"><span class="link-icon"><i class="fas fa-exchange-alt"></i></span> 貨幣兌換</a>
+            <a href="/stocks" class="sidebar-link"><span class="link-icon"><i class="fas fa-chart-line"></i></span> 股票交易</a>
+            <a href="/crypto" class="sidebar-link"><span class="link-icon"><i class="fas fa-coins"></i></span> 加密貨幣</a>
+            <a href="/wallet" class="sidebar-link"><span class="link-icon"><i class="fas fa-wallet"></i></span> 錢包</a>
+            <a href="/deposit" class="sidebar-link"><span class="link-icon"><i class="fas fa-plus-circle"></i></span> 存款</a>
+            <a href="/withdraw" class="sidebar-link"><span class="link-icon"><i class="fas fa-university"></i></span> 提款</a>
+
+            <div class="sidebar-section-label">服務</div>
+            <a href="/kyc" class="sidebar-link"><span class="link-icon"><i class="fas fa-id-card"></i></span> KYC認證</a>
+            <a href="/tradebot" class="sidebar-link"><span class="link-icon"><i class="fas fa-robot"></i></span> 交易機械人</a>
+            <a href="/ledger" class="sidebar-link active"><span class="link-icon"><i class="fas fa-book"></i></span> 公開賬本</a>
+            <a href="/transactions" class="sidebar-link"><span class="link-icon"><i class="fas fa-history"></i></span> 交易記錄</a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="sidebar-user-info">
+                <div class="user-avatar" id="sidebarUserAvatar">U</div>
+                <div>
+                    <div class="user-name" id="sidebarUserName">用戶</div>
+                    <a href="#" onclick="logout(); return false;" style="font-size:0.75rem;color:var(--text-muted);"><i class="fas fa-sign-out-alt"></i> 登出</a>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="page-header">
+            <h1><i class="fas fa-book" style="color:var(--gold);"></i> 公開賬本</h1>
+            <p>所有交易記錄都喺區塊鏈廣播 — 透明、不可篡改</p>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid" id="ledgerStats">
+            <div class="card">
+                <div style="color:var(--text-secondary);font-size:0.85rem;">總交易筆數</div>
+                <div style="font-size:1.8rem;font-weight:700;color:var(--gold);" id="totalTransactions">---</div>
+            </div>
+            <div class="card">
+                <div style="color:var(--text-secondary);font-size:0.85rem;">已廣播</div>
+                <div style="font-size:1.8rem;font-weight:700;color:var(--success);" id="broadcastCount">---</div>
+            </div>
+            <div class="card">
+                <div style="color:var(--text-secondary);font-size:0.85rem;">待確認</div>
+                <div style="font-size:1.8rem;font-weight:700;color:var(--warning);" id="pendingCount">---</div>
+            </div>
+            <div class="card">
+                <div style="color:var(--text-secondary);font-size:0.85rem;">總金額 (USD)</div>
+                <div style="font-size:1.8rem;font-weight:700;color:var(--cyan);" id="totalVolume">---</div>
+            </div>
+        </div>
+
+        <!-- Filter & Search -->
+        <div class="card mb-24">
+            <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+                <div style="flex:1;min-width:200px;">
+                    <label class="form-label">過濾類型</label>
+                    <select id="ledgerFilter" class="form-select" onchange="loadLedger()">
+                        <option value="all">全部交易</option>
+                        <option value="deposit">存款</option>
+                        <option value="withdrawal">提款</option>
+                        <option value="exchange">兌換</option>
+                        <option value="trade">交易</option>
+                        <option value="mining">挖礦</option>
+                        <option value="transfer">轉帳</option>
+                        <option value="fee">手續費</option>
+                    </select>
+                </div>
+                <div style="flex:2;min-width:250px;">
+                    <label class="form-label">搜尋交易哈希</label>
+                    <div style="display:flex;gap:8px;">
+                        <input type="text" id="verifyHashInput" class="form-input" placeholder="輸入交易哈希進行驗證" style="font-family:monospace;">
+                        <button class="btn btn-primary" onclick="verifyHash()"><i class="fas fa-search"></i> 驗證</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Verify Result -->
+        <div id="verifyResult" style="display:none;margin-bottom:24px;"></div>
+
+        <!-- Ledger Table -->
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title"><i class="fas fa-list" style="color:var(--gold);"></i> 交易記錄</span>
+                <span style="font-size:0.85rem;color:var(--text-secondary);" id="entryCount">0 筆</span>
+            </div>
+            <div class="table-container" style="max-height:600px;overflow-y:auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>交易哈希</th>
+                            <th>類型</th>
+                            <th>金額</th>
+                            <th>貨幣</th>
+                            <th>發送方</th>
+                            <th>接收方</th>
+                            <th>狀態</th>
+                            <th>時間</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ledgerBody">
+                        <tr><td colspan="8" style="text-align:center;color:var(--text-muted);">載入中...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <div id="toastContainer" class="toast-container"></div>
+    <script src="/static/js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadLedger();
+        });
+
+        async function loadLedger() {
+            const tbody = document.getElementById('ledgerBody');
+            const filter = document.getElementById('ledgerFilter').value;
+
+            try {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-muted);"><i class="fas fa-spinner fa-spin"></i> 載入中...</td></tr>';
+
+                const data = await apiGet('/payment/broadcast-ledger');
+                let entries = data.entries || data.transactions || data || [];
+
+                // Stats
+                if (data.stats) {
+                    document.getElementById('totalTransactions').textContent = data.stats.total || (entries.length || 0).toLocaleString();
+                    document.getElementById('broadcastCount').textContent = data.stats.broadcast || '---';
+                    document.getElementById('pendingCount').textContent = data.stats.pending || '---';
+                    document.getElementById('totalVolume').textContent = formatCurrency(data.stats.total_volume || 0);
+                } else if (entries.length > 0) {
+                    document.getElementById('totalTransactions').textContent = entries.length.toLocaleString();
+                    document.getElementById('broadcastCount').textContent = entries.filter(e => e.status === 'broadcast' || e.status === 'confirmed').length.toLocaleString();
+                    document.getElementById('pendingCount').textContent = entries.filter(e => e.status === 'pending').length.toLocaleString();
+                    const vol = entries.reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
+                    document.getElementById('totalVolume').textContent = formatCurrency(vol);
+                }
+
+                if (!Array.isArray(entries)) entries = [];
+
+                // Filter
+                if (filter !== 'all') {
+                    entries = entries.filter(e => (e.type || '').toLowerCase() === filter);
+                }
+
+                // Update count
+                document.getElementById('entryCount').textContent = entries.length + ' 筆';
+
+                if (entries.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-muted);">暫無記錄</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = entries.map(entry => {
+                    const txHash = entry.tx_hash || entry.hash || entry.id || '---';
+                    const shortHash = typeof txHash === 'string' && txHash.length > 16
+                        ? txHash.substring(0, 8) + '...' + txHash.substring(txHash.length - 8)
+                        : txHash;
+
+                    const statusMap = {
+                        'broadcast': '已廣播',
+                        'confirmed': '已確認',
+                        'pending': '待確認',
+                        'failed': '失敗',
+                        'completed': '已完成'
+                    };
+                    const statusClass = entry.status === 'broadcast' || entry.status === 'confirmed' || entry.status === 'completed' ? 'status-completed' :
+                        entry.status === 'pending' ? 'status-pending' : 'status-failed';
+
+                    const typeMap = {
+                        'deposit': '存款',
+                        'withdrawal': '提款',
+                        'exchange': '兌換',
+                        'trade': '交易',
+                        'mining': '挖礦',
+                        'transfer': '轉帳',
+                        'fee': '手續費'
+                    };
+                    const typeDisplay = typeMap[entry.type] || entry.type || '---';
+
+                    const amount = parseFloat(entry.amount || 0);
+                    const currency = entry.currency || 'USD';
+
+                    return `<tr>
+                        <td style="font-family:monospace;font-size:0.78rem;" title="${txHash}">
+                            <a href="#" onclick="showVerifyPopup('${txHash}'); return false;" style="color:var(--cyan);text-decoration:none;">${shortHash}</a>
+                        </td>
+                        <td><span class="status-badge status-info">${typeDisplay}</span></td>
+                        <td style="font-weight:600;">${currency === 'TC' ? amount.toFixed(4) : formatCurrency(amount)}</td>
+                        <td>${currency}</td>
+                        <td style="font-size:0.8rem;color:var(--text-secondary);">${entry.from || entry.sender || '---'}</td>
+                        <td style="font-size:0.8rem;color:var(--text-secondary);">${entry.to || entry.receiver || '---'}</td>
+                        <td><span class="status-badge ${statusClass}">${statusMap[entry.status] || entry.status}</span></td>
+                        <td style="font-size:0.8rem;color:var(--text-secondary);">${formatTime(entry.created_at || entry.timestamp)}</td>
+                    </tr>`;
+                }).join('');
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-muted);">載入失敗: ' + e.message + '</td></tr>';
+            }
+        }
+
+        async function verifyHash() {
+            const hash = document.getElementById('verifyHashInput').value.trim();
+            const resultEl = document.getElementById('verifyResult');
+
+            if (!hash) {
+                showToast('請輸入交易哈希', 'error');
+                return;
+            }
+
+            try {
+                resultEl.style.display = 'block';
+                resultEl.innerHTML = '<div class="card" style="text-align:center;padding:20px;color:var(--text-secondary);"><i class="fas fa-spinner fa-spin"></i> 驗證中...</div>';
+
+                const data = await apiGet(`/payment/broadcast-ledger/verify/${hash}`);
+
+                if (data) {
+                    const statusText = data.verified ? '✅ 驗證成功 - 交易已廣播到區塊鏈' : '❌ 交易哈希無效或未廣播';
+                    const statusColor = data.verified ? 'var(--success)' : 'var(--danger)';
+
+                    resultEl.innerHTML = `
+                        <div class="card" style="border-color:rgba(16,185,129,0.3);">
+                            <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;">
+                                <div style="width:48px;height:48px;border-radius:50%;background:rgba(16,185,129,0.12);display:flex;align-items:center;justify-content:center;font-size:1.5rem;">
+                                    ${data.verified ? '&#x2705;' : '&#x274C;'}
+                                </div>
+                                <div>
+                                    <div style="font-weight:600;font-size:1.1rem;color:${statusColor};">${statusText}</div>
+                                    <div style="font-size:0.85rem;color:var(--text-secondary);">區塊鏈哈希驗證</div>
+                                </div>
+                            </div>
+                            ${data.verified ? `
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:0.9rem;">
+                                <div><strong>類型:</strong> ${data.type || '---'}</div>
+                                <div><strong>金額:</strong> ${formatCurrency(data.amount || 0)}</div>
+                                <div><strong>貨幣:</strong> ${data.currency || '---'}</div>
+                                <div><strong>區塊:</strong> ${data.block_number || '---'}</div>
+                                <div style="grid-column:span 2;"><strong>完整哈希:</strong></div>
+                                <div style="grid-column:span 2;font-family:monospace;font-size:0.78rem;word-break:break-all;color:var(--text-secondary);">${hash}</div>
+                            </div>` : ''}
+                        </div>
+                    `;
+                }
+            } catch (e) {
+                resultEl.style.display = 'block';
+                resultEl.innerHTML = `
+                    <div class="card" style="border-color:rgba(239,68,68,0.3);">
+                        <div style="display:flex;align-items:center;gap:16px;">
+                            <div style="width:48px;height:48px;border-radius:50%;background:rgba(239,68,68,0.12);display:flex;align-items:center;justify-content:center;font-size:1.5rem;">&#x274C;</div>
+                            <div>
+                                <div style="font-weight:600;color:var(--danger);">驗證失敗</div>
+                                <div style="font-size:0.85rem;color:var(--text-secondary);">${e.message}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function showVerifyPopup(hash) {
+            document.getElementById('verifyHashInput').value = hash;
+            verifyHash();
+            document.getElementById('verifyResult').scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>

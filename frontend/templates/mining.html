@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>流量金挖礦 - XE 平台</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="/" class="nav-logo"><div class="logo-icon">XE</div><span class="logo-text">XE 平台</span></a>
+            <div class="nav-links" id="navLinks">
+                <a href="/dashboard" class="nav-link">儀表板</a>
+                <a href="/mining" class="nav-link active">⛏️ 挖礦</a>
+                <a href="/wallet" class="nav-link">💰 錢包</a>
+                <a href="/exchange" class="nav-link">💱 兌換</a>
+                <a href="/stock-market" class="nav-link">📈 股票</a>
+                <a href="/crypto-market" class="nav-link">₿ 加密貨幣</a>
+                <a href="/withdraw" class="nav-link">🏦 提款</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="page-container">
+        <div class="page-content">
+            <div class="page-header">
+                <h1>⛏️ 流量金挖礦</h1>
+                <p>每10秒產出 1 流量金 = 1 USD，世界時間不間斷挖礦</p>
+            </div>
+            
+            <div class="grid-2">
+                <!-- Mining Display -->
+                <div class="card mining-display">
+                    <div style="font-size:1rem;color:var(--text-secondary);margin-bottom:8px;">當前流量金餘額</div>
+                    <div class="mining-amount" id="miningAmount">0.0000</div>
+                    <div class="mining-currency" id="miningUsdValue">≈ $0.00 USD</div>
+                    
+                    <div class="mining-progress">
+                        <div class="mining-progress-bar" id="miningProgressBar"></div>
+                    </div>
+                    
+                    <button id="startMining" class="btn btn-primary btn-lg">
+                        ⛏️ 開始挖礦
+                    </button>
+                    
+                    <div class="mining-rate-display" id="miningRate">
+                        <div class="mining-rate-item">
+                            <div class="value" id="ratePer10s">1.0</div>
+                            <div class="label">每10秒</div>
+                        </div>
+                        <div class="mining-rate-item">
+                            <div class="value" id="ratePerMin">6.0</div>
+                            <div class="label">每分鐘</div>
+                        </div>
+                        <div class="mining-rate-item">
+                            <div class="value" id="ratePerHour">360</div>
+                            <div class="label">每小時</div>
+                        </div>
+                        <div class="mining-rate-item">
+                            <div class="value" id="ratePerDay">8,640</div>
+                            <div class="label">每天</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- World Time Calculator -->
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">🌍 世界時間計算器</span>
+                    </div>
+                    <p style="color:var(--text-secondary);font-size:0.9rem;margin-bottom:16px;">
+                        計算任何時間段可產出的流量金
+                    </p>
+                    
+                    <div class="form-group">
+                        <label class="form-label">選擇時間長度</label>
+                        <select class="form-select" id="timeSelect" onchange="calculateWorldTime()">
+                            <option value="60">1 分鐘</option>
+                            <option value="600">10 分鐘</option>
+                            <option value="3600">1 小時</option>
+                            <option value="86400" selected>24 小時</option>
+                            <option value="604800">1 週</option>
+                            <option value="2592000">1 個月（30天）</option>
+                            <option value="31536000">1 年</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">或自訂秒數</label>
+                        <input type="number" class="form-input" id="customSeconds" placeholder="輸入秒數" onchange="calculateWorldTime()">
+                    </div>
+                    
+                    <div id="worldTimeResult" style="margin-top:16px;">
+                        <div class="grid-2" style="gap:12px;">
+                            <div class="card" style="background:rgba(99,102,241,0.1);border-color:rgba(99,102,241,0.3);padding:16px;text-align:center;">
+                                <div style="font-size:0.8rem;color:var(--text-secondary);">流量金</div>
+                                <div style="font-size:1.5rem;font-weight:700;" id="wtTC">8,640.00</div>
+                                <div style="font-size:0.8rem;color:var(--text-muted);">TC</div>
+                            </div>
+                            <div class="card" style="background:rgba(16,185,129,0.1);border-color:rgba(16,185,129,0.3);padding:16px;text-align:center;">
+                                <div style="font-size:0.8rem;color:var(--text-secondary);">等值美金</div>
+                                <div style="font-size:1.5rem;font-weight:700;" id="wtUSD">$8,640.00</div>
+                                <div style="font-size:0.8rem;color:var(--text-muted);">USD</div>
+                            </div>
+                            <div class="card" style="background:rgba(6,182,212,0.1);border-color:rgba(6,182,212,0.3);padding:16px;text-align:center;">
+                                <div style="font-size:0.8rem;color:var(--text-secondary);">等值港幣</div>
+                                <div style="font-size:1.5rem;font-weight:700;" id="wtHKD">HK$67,392.00</div>
+                                <div style="font-size:0.8rem;color:var(--text-muted);">HKD</div>
+                            </div>
+                            <div class="card" style="background:rgba(245,158,11,0.1);border-color:rgba(245,158,11,0.3);padding:16px;text-align:center;">
+                                <div style="font-size:0.8rem;color:var(--text-secondary);">等值人民幣</div>
+                                <div style="font-size:1.5rem;font-weight:700;" id="wtCNY">¥62,208.00</div>
+                                <div style="font-size:0.8rem;color:var(--text-muted);">CNY</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top:16px;padding:16px;background:var(--bg-card);border-radius:var(--radius-sm);">
+                        <div style="font-size:0.85rem;color:var(--text-secondary);">🌐 世界時間（即時）</div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;">
+                            <div><span style="color:var(--text-muted);">UTC</span> <span id="worldUTC">---</span></div>
+                            <div><span style="color:var(--text-muted);">香港</span> <span id="worldHK">---</span></div>
+                            <div><span style="color:var(--text-muted);">紐約</span> <span id="worldNY">---</span></div>
+                            <div><span style="color:var(--text-muted);">東京</span> <span id="worldTokyo">---</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Today's Mining Stats -->
+            <div class="grid-3" style="margin-top:20px;">
+                <div class="card">
+                    <div style="color:var(--text-secondary);font-size:0.85rem;">今日已挖礦</div>
+                    <div style="font-size:2rem;font-weight:700;color:var(--success);" id="todayMined">0.0000</div>
+                    <div style="color:var(--text-muted);font-size:0.85rem;">TC</div>
+                </div>
+                <div class="card">
+                    <div style="color:var(--text-secondary);font-size:0.85rem;">總共已挖礦</div>
+                    <div style="font-size:2rem;font-weight:700;color:var(--primary-light);" id="totalMined">0.0000</div>
+                    <div style="color:var(--text-muted);font-size:0.85rem;">TC</div>
+                </div>
+                <div class="card">
+                    <div style="color:var(--text-secondary);font-size:0.85rem;">1 TC 價值</div>
+                    <div style="font-size:2rem;font-weight:700;color:var(--secondary);">1.00 USD</div>
+                    <div style="color:var(--text-muted);font-size:0.85rem;">永久固定匯率</div>
+                </div>
+            </div>
+            
+            <div style="margin-top:20px;text-align:center;">
+                <a href="/traffic-coin/history" class="btn btn-outline">📜 查看挖礦記錄</a>
+                <a href="/public-records" class="btn btn-outline" style="margin-left:12px;">🔗 公開區塊鏈</a>
+            </div>
+        </div>
+    </div>
+    
+    <div id="toastContainer" class="toast-container"></div>
+    <script src="/static/js/main.js"></script>
+    <script>
+        // World Time Calculator
+        async function calculateWorldTime() {
+            const select = document.getElementById('timeSelect');
+            const custom = document.getElementById('customSeconds');
+            const seconds = custom.value ? parseInt(custom.value) : parseInt(select.value);
+            
+            try {
+                const data = await fetch(`/traffic-coin/world-time-calculator?seconds=${seconds}`).then(r => r.json());
+                
+                document.getElementById('wtTC').textContent = data.output.traffic_coin.toLocaleString();
+                document.getElementById('wtUSD').textContent = '$' + data.output.usd.toLocaleString();
+                document.getElementById('wtHKD').textContent = 'HK$' + data.output.hkd.toLocaleString();
+                document.getElementById('wtCNY').textContent = '¥' + data.output.cny.toLocaleString();
+                
+                document.getElementById('worldUTC').textContent = data.world_time.utc;
+                document.getElementById('worldHK').textContent = data.world_time.hong_kong;
+                document.getElementById('worldNY').textContent = data.world_time.new_york;
+                document.getElementById('worldTokyo').textContent = data.world_time.tokyo;
+            } catch(e) {
+                console.error('World time calc error:', e);
+            }
+        }
+        
+        // Auto-calculate on load
+        document.addEventListener('DOMContentLoaded', calculateWorldTime);
+    </script>
+</body>
+</html>

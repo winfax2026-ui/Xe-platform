@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>存款 - XE 平台</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+    <div class="animated-bg"></div>
+
+    <!-- Top Bar (Mobile) -->
+    <div class="topbar">
+        <button class="topbar-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+        <div style="font-weight:700;color:var(--gold);">XE 平台</div>
+        <span id="topbarUserName" style="font-size:0.85rem;color:var(--text-secondary);"></span>
+    </div>
+
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-logo">
+            <div class="logo-icon">XE</div>
+            <span class="logo-text">XE 平台</span>
+        </div>
+        <nav class="sidebar-menu">
+            <div class="sidebar-section-label">主要功能</div>
+            <a href="/dashboard" class="sidebar-link"><span class="link-icon"><i class="fas fa-tachometer-alt"></i></span> 儀表板</a>
+            <a href="/mining" class="sidebar-link"><span class="link-icon"><i class="fas fa-gem"></i></span> 流量金挖掘</a>
+            <a href="/exchange" class="sidebar-link"><span class="link-icon"><i class="fas fa-exchange-alt"></i></span> 貨幣兌換</a>
+            <a href="/stocks" class="sidebar-link"><span class="link-icon"><i class="fas fa-chart-line"></i></span> 股票交易</a>
+            <a href="/crypto" class="sidebar-link"><span class="link-icon"><i class="fas fa-coins"></i></span> 加密貨幣</a>
+            <a href="/wallet" class="sidebar-link"><span class="link-icon"><i class="fas fa-wallet"></i></span> 錢包</a>
+            <a href="/deposit" class="sidebar-link active"><span class="link-icon"><i class="fas fa-plus-circle"></i></span> 存款</a>
+            <a href="/withdraw" class="sidebar-link"><span class="link-icon"><i class="fas fa-university"></i></span> 提款</a>
+
+            <div class="sidebar-section-label">服務</div>
+            <a href="/kyc" class="sidebar-link"><span class="link-icon"><i class="fas fa-id-card"></i></span> KYC認證</a>
+            <a href="/tradebot" class="sidebar-link"><span class="link-icon"><i class="fas fa-robot"></i></span> 交易機械人</a>
+            <a href="/ledger" class="sidebar-link"><span class="link-icon"><i class="fas fa-book"></i></span> 公開賬本</a>
+            <a href="/transactions" class="sidebar-link"><span class="link-icon"><i class="fas fa-history"></i></span> 交易記錄</a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="sidebar-user-info">
+                <div class="user-avatar" id="sidebarUserAvatar">U</div>
+                <div>
+                    <div class="user-name" id="sidebarUserName">用戶</div>
+                    <a href="#" onclick="logout(); return false;" style="font-size:0.75rem;color:var(--text-muted);"><i class="fas fa-sign-out-alt"></i> 登出</a>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="page-header">
+            <h1><i class="fas fa-plus-circle" style="color:var(--gold);"></i> 存款</h1>
+            <p>存入資金到您的 XE 平台賬戶</p>
+        </div>
+
+        <!-- KYC Alert -->
+        <div id="kycAlert" class="card" style="display:none;border-color:rgba(245,158,11,0.3);margin-bottom:24px;">
+            <div class="flex items-center justify-between">
+                <div>
+                    <strong style="color:var(--warning);">&#26A0;&#FE0F; KYC 認證未完成</strong>
+                    <p style="color:var(--text-secondary);font-size:0.85rem;margin-top:4px;">完成 KYC 認證後存款上限會提高</p>
+                </div>
+                <a href="/kyc" class="btn btn-warning btn-sm">立即認證</a>
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <!-- Left: Deposit Methods -->
+            <div>
+                <!-- Method Selection -->
+                <div class="card mb-24">
+                    <div class="card-header">
+                        <span class="card-title"><i class="fas fa-credit-card" style="color:var(--gold);"></i> 選擇存款方式</span>
+                    </div>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;" id="methodGrid">
+                        <div class="method-card active" data-method="fps" onclick="selectMethod('fps')" style="text-align:center;padding:16px;border-radius:var(--radius-sm);border:1px solid var(--border);cursor:pointer;transition:all 0.2s;background:var(--bg-card);">
+                            <div style="font-size:2rem;margin-bottom:6px;">&#x1F3E6;</div>
+                            <div style="font-size:0.85rem;font-weight:600;">轉數快 FPS</div>
+                        </div>
+                        <div class="method-card" data-method="paypal" onclick="selectMethod('paypal')" style="text-align:center;padding:16px;border-radius:var(--radius-sm);border:1px solid var(--border);cursor:pointer;transition:all 0.2s;background:var(--bg-card);">
+                            <div style="font-size:2rem;margin-bottom:6px;">&#x1F4B3;</div>
+                            <div style="font-size:0.85rem;font-weight:600;">PayPal</div>
+                        </div>
+                        <div class="method-card" data-method="wechat" onclick="selectMethod('wechat')" style="text-align:center;padding:16px;border-radius:var(--radius-sm);border:1px solid var(--border);cursor:pointer;transition:all 0.2s;background:var(--bg-card);">
+                            <div style="font-size:2rem;margin-bottom:6px;">&#x1F49A;</div>
+                            <div style="font-size:0.85rem;font-weight:600;">微信支付</div>
+                        </div>
+                        <div class="method-card" data-method="alipay" onclick="selectMethod('alipay')" style="text-align:center;padding:16px;border-radius:var(--radius-sm);border:1px solid var(--border);cursor:pointer;transition:all 0.2s;background:var(--bg-card);">
+                            <div style="font-size:2rem;margin-bottom:6px;">&#x1F535;</div>
+                            <div style="font-size:0.85rem;font-weight:600;">支付寶</div>
+                        </div>
+                        <div class="method-card" data-method="crypto" onclick="selectMethod('crypto')" style="text-align:center;padding:16px;border-radius:var(--radius-sm);border:1px solid var(--border);cursor:pointer;transition:all 0.2s;background:var(--bg-card);">
+                            <div style="font-size:2rem;margin-bottom:6px;">&#x20BF;</div>
+                            <div style="font-size:0.85rem;font-weight:600;">加密貨幣</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FPS Info -->
+                <div id="fpsInfo" class="card mb-24">
+                    <div class="card-header">
+                        <span class="card-title"><i class="fas fa-university" style="color:var(--gold);"></i> 轉數快 (FPS) 存款</span>
+                    </div>
+                    <div id="fpsContent">
+                        <div style="text-align:center;padding:20px;color:var(--text-secondary);"><i class="fas fa-spinner fa-spin"></i> 載入中...</div>
+                    </div>
+                </div>
+
+                <!-- PayPal Info -->
+                <div id="paypalInfo" class="card mb-24" style="display:none;">
+                    <div class="card-header">
+                        <span class="card-title"><i class="fab fa-paypal" style="color:#0070ba;"></i> PayPal 存款</span>
+                    </div>
+                    <div id="paypalContent">
+                        <div style="text-align:center;padding:20px;color:var(--text-secondary);"><i class="fas fa-spinner fa-spin"></i> 載入中...</div>
+                    </div>
+                </div>
+
+                <!-- WeChat Info -->
+                <div id="wechatInfo" class="card mb-24" style="display:none;">
+                    <div class="card-header">
+                        <span class="card-title"><i class="fas fa-weixin" style="color:#07c160;"></i> 微信支付存款</span>
+                    </div>
+                    <div id="wechatContent">
+                        <div style="text-align:center;padding:20px;color:var(--text-secondary);"><i class="fas fa-spinner fa-spin"></i> 載入中...</div>
+                    </div>
+                </div>
+
+                <!-- Alipay Info -->
+                <div id="alipayInfo" class="card mb-24" style="display:none;">
+                    <div class="card-header">
+                        <span class="card-title"><i class="fas fa-alipay" style="color:#1677ff;"></i> 支付寶存款</span>
+                    </div>
+                    <div id="alipayContent">
+                        <div style="text-align:center;padding:20px;color:var(--text-secondary);"><i class="fas fa-spinner fa-spin"></i> 載入中...</div>
+                    </div>
+                </div>
+
+                <!-- Crypto Info -->
+                <div id="cryptoInfo" class="card mb-24" style="display:none;">
+                    <div class="card-header">
+                        <span class="card-title"><i class="fas fa-coins" style="color:var(--gold);"></i> 加密貨幣存款</span>
+                    </div>
+                    <div id="cryptoContent">
+                        <div style="text-align:center;padding:20px;color:var(--text-secondary);"><i class="fas fa-spinner fa-spin"></i> 載入中...</div>
+                    </div>
+                </div>
+
+                <!-- Submit Deposit -->
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title"><i class="fas fa-check-circle" style="color:var(--gold);"></i> 提交存款通知</span>
+                    </div>
+                    <form id="depositForm">
+                        <div class="form-group">
+                            <label class="form-label">存款方式</label>
+                            <select id="depositMethod" class="form-select">
+                                <option value="fps">轉數快 FPS</option>
+                                <option value="paypal">PayPal</option>
+                                <option value="wechat">微信支付</option>
+                                <option value="alipay">支付寶</option>
+                                <option value="crypto">加密貨幣</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">存款金額 (USD)</label>
+                            <input type="number" id="depositAmount" class="form-input" step="0.01" min="1" placeholder="輸入金額">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">交易哈希 / 參考編號</label>
+                            <input type="text" id="depositTxHash" class="form-input" placeholder="輸入交易哈希或參考編號">
+                            <div class="form-hint">入數後請輸入銀行轉賬參考編號或加密貨幣交易哈希</div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block"><i class="fas fa-paper-plane"></i> 提交存款通知</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Right: Info & History -->
+            <div>
+                <!-- Quick Info -->
+                <div class="card mb-24">
+                    <div class="card-header">
+                        <span class="card-title"><i class="fas fa-info-circle" style="color:var(--cyan);"></i> 存款須知</span>
+                    </div>
+                    <ul style="padding-left:16px;color:var(--text-secondary);font-size:0.85rem;line-height:2;">
+                        <li>FPS 轉數快存款即時到帳，免手續費</li>
+                        <li>PayPal 存款會收取 2% 手續費</li>
+                        <li>微信支付 / 支付寶存款需時 1-5 分鐘</li>
+                        <li>加密貨幣存款需 1-3 個網絡確認</li>
+                        <li>最低存款金額：$10 USD 或等值</li>
+                        <li>未認證用戶每日存款上限：$10,000 USD</li>
+                    </ul>
+                </div>
+
+                <!-- Balance Overview -->
+                <div class="card mb-24">
+                    <div class="card-header">
+                        <span class="card-title"><i class="fas fa-wallet" style="color:var(--gold);"></i> 錢包結餘</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;padding:8px 0;">
+                        <span>&#x1FA99; 流量金 (TC)</span>
+                        <span id="depTCBalance" style="font-weight:600;color:var(--gold);">0.0000</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;padding:8px 0;">
+                        <span>&#x1F4B5; 美金 (USD)</span>
+                        <span id="depUSDBalance" style="font-weight:600;color:var(--success);">$0.00</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;padding:8px 0;">
+                        <span>&#x1F3E6; 港幣 (HKD)</span>
+                        <span id="depHKDBalance" style="font-weight:600;color:var(--cyan);">HK$0.00</span>
+                    </div>
+                </div>
+
+                <!-- Deposit History -->
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title"><i class="fas fa-history" style="color:var(--gold);"></i> 存款記錄</span>
+                    </div>
+                    <div class="table-container" style="max-height:400px;overflow-y:auto;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>金額</th>
+                                    <th>方式</th>
+                                    <th>狀態</th>
+                                    <th>時間</th>
+                                </tr>
+                            </thead>
+                            <tbody id="depositHistoryBody">
+                                <tr><td colspan="4" style="text-align:center;color:var(--text-muted);">載入中...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="toastContainer" class="toast-container"></div>
+    <script src="/static/js/main.js"></script>
+    <script>
+        let depositInfo = {};
+        let selectedMethod = 'fps';
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                // Load deposit info
+                const info = await apiGet('/payment/deposit/info');
+                depositInfo = info;
+
+                // Update KYC alert
+                const kycAlert = document.getElementById('kycAlert');
+                if (kycAlert && info.kyc_verified) kycAlert.style.display = 'none';
+
+                // Update wallets
+                if (info.wallet) {
+                    document.getElementById('depTCBalance').textContent = (info.wallet.traffic_coin || 0).toFixed(4);
+                    document.getElementById('depUSDBalance').textContent = formatCurrency(info.wallet.usd || 0);
+                    document.getElementById('depHKDBalance').textContent = formatCurrency(info.wallet.hkd || 0, 'HKD');
+                }
+
+                // Render FPS info
+                renderFPS(info.fps);
+                renderPayPal(info.paypal);
+                renderWeChat(info.wechat);
+                renderAlipay(info.alipay);
+                renderCrypto(info.crypto);
+
+                // Load history
+                loadDepositHistory();
+            } catch (e) {
+                console.error('Deposit page load error:', e);
+            }
+        });
+
+        function renderFPS(data) {
+            const el = document.getElementById('fpsContent');
+            if (!data) {
+                el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);">暫無 FPS 存款資料</div>';
+                return;
+            }
+            el.innerHTML = `
+                <div class="form-group">
+                    <label class="form-label">收款銀行</label>
+                    <div style="padding:12px;background:var(--bg-input);border-radius:var(--radius-sm);border:1px solid var(--border);">
+                        <strong>${data.bank_name || '---'}</strong>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">賬戶號碼</label>
+                    <div style="padding:12px;background:var(--bg-input);border-radius:var(--radius-sm);border:1px solid var(--border);font-family:monospace;font-size:1.1rem;letter-spacing:1px;">
+                        <strong>${data.account_number || '---'}</strong>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">賬戶名稱</label>
+                    <div style="padding:12px;background:var(--bg-input);border-radius:var(--radius-sm);border:1px solid var(--border);">
+                        ${data.account_name || '---'}
+                    </div>
+                </div>
+                ${data.fps_email ? `
+                <div class="form-group">
+                    <label class="form-label">FPS 電郵</label>
+                    <div style="padding:12px;background:var(--bg-input);border-radius:var(--radius-sm);border:1px solid var(--border);">
+                        ${data.fps_email}
+                    </div>
+                </div>` : ''}
+                ${data.qr_code ? `<div style="text-align:center;margin-top:12px;">
+                    <img src="${data.qr_code}" alt="FPS QR Code" style="max-width:200px;border-radius:var(--radius-sm);">
+                </div>` : ''}
+            `;
+        }
+
+        function renderPayPal(data) {
+            const el = document.getElementById('paypalContent');
+            if (!data) {
+                el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);">暫無 PayPal 存款資料</div>';
+                return;
+            }
+            el.innerHTML = `
+                <div class="form-group">
+                    <label class="form-label">PayPal 收款電郵</label>
+                    <div style="padding:12px;background:var(--bg-input);border-radius:var(--radius-sm);border:1px solid var(--border);font-size:1.1rem;">
+                        <strong>${data.email || '---'}</strong>
+                    </div>
+                </div>
+                <div style="font-size:0.85rem;color:var(--text-secondary);margin-top:8px;">
+                    &#x1F6C8; 請登入 PayPal 轉帳到以上電郵地址，並在下方提交交易參考編號
+                </div>
+            `;
+        }
+
+        function renderWeChat(data) {
+            const el = document.getElementById('wechatContent');
+            if (!data) {
+                el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);">暫無微信支付存款資料</div>';
+                return;
+            }
+            el.innerHTML = `
+                <div class="form-group">
+                    <label class="form-label">微信支付收款帳戶</label>
+                    <div style="padding:12px;background:var(--bg-input);border-radius:var(--radius-sm);border:1px solid var(--border);font-size:1.1rem;">
+                        <strong>${data.account || '---'}</strong>
+                    </div>
+                </div>
+                ${data.qr_code ? `<div style="text-align:center;margin-top:12px;">
+                    <img src="${data.qr_code}" alt="WeChat QR Code" style="max-width:200px;border-radius:var(--radius-sm);">
+                </div>` : ''}
+            `;
+        }
+
+        function renderAlipay(data) {
+            const el = document.getElementById('alipayContent');
+            if (!data) {
+                el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);">暫無支付寶存款資料</div>';
+                return;
+            }
+            el.innerHTML = `
+                <div class="form-group">
+                    <label class="form-label">支付寶收款帳戶</label>
+                    <div style="padding:12px;background:var(--bg-input);border-radius:var(--radius-sm);border:1px solid var(--border);font-size:1.1rem;">
+                        <strong>${data.account || '---'}</strong>
+                    </div>
+                </div>
+                ${data.qr_code ? `<div style="text-align:center;margin-top:12px;">
+                    <img src="${data.qr_code}" alt="Alipay QR Code" style="max-width:200px;border-radius:var(--radius-sm);">
+                </div>` : ''}
+            `;
+        }
+
+        function renderCrypto(data) {
+            const el = document.getElementById('cryptoContent');
+            if (!data) {
+                el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);">暫無加密貨幣存款資料</div>';
+                return;
+            }
+            let html = '';
+            if (Array.isArray(data)) {
+                data.forEach(coin => {
+                    html += `
+                        <div class="card" style="margin-bottom:12px;background:var(--bg-input);">
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                                <strong style="font-size:1rem;color:var(--gold);">${coin.currency || coin.symbol || '---'}</strong>
+                                <span style="font-size:0.8rem;color:var(--text-muted);">網絡: ${coin.network || '---'}</span>
+                            </div>
+                            <div style="padding:12px;background:var(--bg-card);border-radius:var(--radius-sm);word-break:break-all;font-family:monospace;font-size:0.85rem;">
+                                ${coin.address || '---'}
+                            </div>
+                            <div style="font-size:0.75rem;color:var(--text-muted);margin-top:6px;">
+                                最低存款: ${coin.min_deposit || '---'} | 確認次數: ${coin.confirmations || '---'}
+                            </div>
+                        </div>
+                    `;
+                });
+            } else if (typeof data === 'object') {
+                html = `
+                    <div class="form-group">
+                        <label class="form-label">貨幣</label>
+                        <div style="padding:12px;background:var(--bg-input);border-radius:var(--radius-sm);border:1px solid var(--border);">
+                            <strong>${data.currency || '---'}</strong>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">存款地址</label>
+                        <div style="padding:12px;background:var(--bg-input);border-radius:var(--radius-sm);border:1px solid var(--border);word-break:break-all;font-family:monospace;font-size:0.85rem;">
+                            ${data.address || '---'}
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">網絡</label>
+                        <div style="padding:12px;background:var(--bg-input);border-radius:var(--radius-sm);border:1px solid var(--border);">
+                            ${data.network || '---'}
+                        </div>
+                    </div>
+                `;
+            }
+            el.innerHTML = html;
+        }
+
+        function selectMethod(method) {
+            selectedMethod = method;
+            document.querySelectorAll('.method-card').forEach(c => {
+                c.style.borderColor = 'var(--border)';
+                c.style.background = 'var(--bg-card)';
+            });
+            const selected = document.querySelector(`.method-card[data-method="${method}"]`);
+            if (selected) {
+                selected.style.borderColor = 'var(--gold)';
+                selected.style.background = 'rgba(240,185,11,0.08)';
+            }
+
+            // Show/hide method info panels
+            const panels = ['fpsInfo', 'paypalInfo', 'wechatInfo', 'alipayInfo', 'cryptoInfo'];
+            panels.forEach(id => {
+                document.getElementById(id).style.display = id.startsWith(method) ? 'block' : 'none';
+            });
+
+            // Update form dropdown
+            document.getElementById('depositMethod').value = method;
+        }
+
+        // Form submission
+        document.getElementById('depositForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const method = document.getElementById('depositMethod').value;
+            const amount = parseFloat(document.getElementById('depositAmount').value);
+            const txHash = document.getElementById('depositTxHash').value.trim();
+
+            if (!amount || amount <= 0) {
+                showToast('請輸入有效存款金額', 'error');
+                return;
+            }
+            if (!txHash) {
+                showToast('請輸入交易哈希或參考編號', 'error');
+                return;
+            }
+
+            try {
+                const btn = e.target.querySelector('button[type="submit"]');
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 提交中...';
+
+                const res = await apiPost('/payment/deposit/submit', { method, amount, tx_hash: txHash });
+
+                if (res.success) {
+                    showToast(res.message || '存款通知已提交，正在處理中', 'success');
+                    document.getElementById('depositAmount').value = '';
+                    document.getElementById('depositTxHash').value = '';
+                    loadDepositHistory();
+                } else {
+                    showToast(res.message || '提交失敗', 'error');
+                }
+
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-paper-plane"></i> 提交存款通知';
+            } catch (err) {
+                showToast('提交失敗: ' + err.message, 'error');
+                const btn = e.target.querySelector('button[type="submit"]');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-paper-plane"></i> 提交存款通知';
+            }
+        });
+
+        async function loadDepositHistory() {
+            const tbody = document.getElementById('depositHistoryBody');
+            try {
+                const data = await apiGet('/payment/deposit/info');
+                const history = data.history || [];
+                if (history.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-muted);">暫無存款記錄</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = history.map(tx => {
+                    const statusClass = tx.status === 'completed' || tx.status === 'confirmed' ? 'status-completed' :
+                        tx.status === 'pending' ? 'status-pending' : 'status-failed';
+                    const statusMap = { 'completed': '已完成', 'confirmed': '已確認', 'pending': '處理中', 'failed': '失敗', 'rejected': '已拒絕' };
+                    return `<tr>
+                        <td>$${(tx.amount || 0).toFixed(2)}</td>
+                        <td>${tx.method || '---'}</td>
+                        <td><span class="status-badge ${statusClass}">${statusMap[tx.status] || tx.status}</span></td>
+                        <td style="font-size:0.8rem;color:var(--text-secondary);">${formatTime(tx.created_at)}</td>
+                    </tr>`;
+                }).join('');
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-muted);">載入失敗</td></tr>';
+            }
+        }
+    </script>
+</body>
+</html>

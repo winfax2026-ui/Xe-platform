@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>錢包 - XE 平台</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="/" class="nav-logo"><div class="logo-icon">XE</div><span class="logo-text">XE 平台</span></a>
+            <div class="nav-links" id="navLinks">
+                <a href="/dashboard" class="nav-link">儀表板</a>
+                <a href="/mining" class="nav-link">⛏️ 挖礦</a>
+                <a href="/wallet" class="nav-link active">💰 錢包</a>
+                <a href="/exchange" class="nav-link">💱 兌換</a>
+                <a href="/stock-market" class="nav-link">📈 股票</a>
+                <a href="/crypto-market" class="nav-link">₿ 加密貨幣</a>
+                <a href="/withdraw" class="nav-link">🏦 提款</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="page-container">
+        <div class="page-content">
+            <div class="page-header">
+                <h1>💰 我的錢包</h1>
+                <p>管理您的所有資產</p>
+            </div>
+            
+            <div class="wallet-grid" id="walletBalances">
+                <div class="wallet-card" style="border-color:rgba(16,185,129,0.3);">
+                    <div class="currency-icon">🪙</div>
+                    <div class="balance" id="walletTC">0.0000</div>
+                    <div class="currency-name">流量金 (TC)</div>
+                    <div style="color:var(--success);font-size:0.85rem;" id="walletTCUSD">= $0.00 USD</div>
+                </div>
+                <div class="wallet-card" style="border-color:rgba(99,102,241,0.3);">
+                    <div class="currency-icon">💵</div>
+                    <div class="balance" id="walletUSD">$0.00</div>
+                    <div class="currency-name">美金 (USD)</div>
+                </div>
+                <div class="wallet-card" style="border-color:rgba(6,182,212,0.3);">
+                    <div class="currency-icon">🏦</div>
+                    <div class="balance" id="walletHKD">HK$0.00</div>
+                    <div class="currency-name">港幣 (HKD)</div>
+                </div>
+                <div class="wallet-card" style="border-color:rgba(245,158,11,0.3);">
+                    <div class="currency-icon">💰</div>
+                    <div class="balance" id="walletCNY">¥0.00</div>
+                    <div class="currency-name">人民幣 (CNY)</div>
+                </div>
+            </div>
+            
+            <div style="margin-top:24px;">
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">⚡ 快速操作</span>
+                    </div>
+                    <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                        <a href="/exchange" class="btn btn-primary"><i class="fas fa-exchange-alt"></i> 兌換貨幣</a>
+                        <a href="/withdraw" class="btn btn-success"><i class="fas fa-university"></i> 提款</a>
+                        <a href="/deposit" class="btn btn-outline"><i class="fas fa-plus-circle"></i> 存款</a>
+                        <a href="/transactions" class="btn btn-outline"><i class="fas fa-history"></i> 交易紀錄</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="toastContainer" class="toast-container"></div>
+    <script src="/static/js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const data = await fetch('/api/user/profile').then(r => r.json());
+                if (data.wallet) {
+                    document.getElementById('walletTC').textContent = data.wallet.traffic_coin.toFixed(4);
+                    document.getElementById('walletTCUSD').textContent = `= $${data.wallet.traffic_coin.toFixed(2)} USD`;
+                    document.getElementById('walletUSD').textContent = '$' + data.wallet.usd.toFixed(2);
+                    document.getElementById('walletHKD').textContent = 'HK$' + data.wallet.hkd.toFixed(2);
+                    document.getElementById('walletCNY').textContent = '¥' + data.wallet.cny.toFixed(2);
+                }
+            } catch(e) {
+                console.error('Wallet load error:', e);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>加密貨幣 - XE平台</title>
+<link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+<div class="app-container">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">XE<small>版</small></div>
+    <nav class="sidebar-nav">
+      <a href="/dashboard"><span class="nav-icon">📊</span>儀表板</a>
+      <a href="/mining"><span class="nav-icon">⛏️</span>流量金挖掘</a>
+      <a href="/exchange-page"><span class="nav-icon">🔄</span>貨幣兌換</a>
+      <a href="/stocks-page"><span class="nav-icon">📈</span>股票交易</a>
+      <a href="/crypto-page" class="active"><span class="nav-icon">₿</span>加密貨幣</a>
+      <a href="/wallet"><span class="nav-icon">👛</span>錢包</a>
+      <a href="/deposit"><span class="nav-icon">📥</span>存款</a>
+      <a href="/withdraw"><span class="nav-icon">📤</span>提款</a>
+      <a href="/kyc-page"><span class="nav-icon">🆔</span>KYC認證</a>
+      <a href="/tradebot-page"><span class="nav-icon">🤖</span>交易機械人</a>
+      <a href="/ledger"><span class="nav-icon">📜</span>公開賬本</a>
+      <a href="/transactions"><span class="nav-icon">🧾</span>交易記錄</a>
+    </nav>
+  </aside>
+  <main class="main-content">
+    <header class="topbar">
+      <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+      <h2>加密貨幣交易</h2>
+      <div class="topbar-right"><span id="userDisplay">--</span> <button onclick="logout()" class="btn-sm btn-danger">登出</button></div>
+    </header>
+    <div class="content">
+      <div class="row">
+        <div class="col-12">
+          <div class="card">
+            <h3>🔴 即時加密貨幣價格</h3>
+            <div class="table-responsive">
+              <table class="table" id="cryptoPriceTable">
+                <thead><tr><th>貨幣</th><th>名稱</th><th>價格 (USD)</th><th>24h變化</th><th>操作</th></tr></thead>
+                <tbody id="cryptoPrices"><tr><td colspan="5" class="text-center">載入中...</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-6">
+          <div class="card">
+            <h3>💰 買入加密貨幣</h3>
+            <form id="buyCryptoForm">
+              <div class="form-group">
+                <label>貨幣</label>
+                <select id="buyCurrency" class="form-input">
+                  <option value="BTC">Bitcoin (BTC)</option>
+                  <option value="ETH">Ethereum (ETH)</option>
+                  <option value="USDT">Tether (USDT)</option>
+                  <option value="BNB">Binance Coin (BNB)</option>
+                  <option value="SOL">Solana (SOL)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>金額 (USD)</label>
+                <input type="number" id="buyAmount" class="form-input" step="0.01" min="1" placeholder="例如 100">
+              </div>
+              <div class="form-group">
+                <label>預計獲得</label>
+                <div id="buyPreview" class="preview-text">--</div>
+              </div>
+              <button type="submit" class="btn btn-primary btn-block">買入</button>
+            </form>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="card">
+            <h3>💸 賣出加密貨幣</h3>
+            <form id="sellCryptoForm">
+              <div class="form-group">
+                <label>貨幣</label>
+                <select id="sellCurrency" class="form-input">
+                  <option value="BTC">Bitcoin (BTC)</option>
+                  <option value="ETH">Ethereum (ETH)</option>
+                  <option value="USDT">Tether (USDT)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>數量</label>
+                <input type="number" id="sellAmount" class="form-input" step="any" min="0.0001" placeholder="例如 0.01">
+              </div>
+              <div class="form-group">
+                <label>預計獲得 (USD)</label>
+                <div id="sellPreview" class="preview-text">--</div>
+              </div>
+              <button type="submit" class="btn btn-danger btn-block">賣出</button>
+            </form>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-12">
+          <div class="card">
+            <h3>👛 我的加密錢包</h3>
+            <div class="table-responsive">
+              <table class="table" id="walletTable">
+                <thead><tr><th>貨幣</th><th>餘額</th><th>約值 (USD)</th></tr></thead>
+                <tbody id="walletBalances"><tr><td colspan="3" class="text-center">載入中...</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <div id="toastContainer"></div>
+</div>
+<script src="/static/js/main.js"></script>
+<script>
+let cryptoPrices = {};
+
+async function loadCryptoPage() {
+  const user = await apiGet('/auth/me');
+  if (!user.success) { window.location.href = '/'; return; }
+  document.getElementById('userDisplay').textContent = user.user.username;
+  loadPrices();
+  loadWallet();
+}
+
+async function loadPrices() {
+  const res = await apiGet('/crypto/prices');
+  if (!res.success) return;
+  cryptoPrices = res.prices;
+  const tbody = document.getElementById('cryptoPrices');
+  tbody.innerHTML = '';
+  
+  const symbols = { 'BTC': '₿ Bitcoin', 'ETH': '⟠ Ethereum', 'USDT': '₮ Tether', 'BNB': 'BNB', 'SOL': 'SOL', 'XRP': 'XRP', 'ADA': 'ADA', 'DOGE': 'Ð Doge' };
+  let html = '';
+  for (const [sym, info] of Object.entries(res.prices)) {
+    if (info.price === 0 && info.change === 0 && sym !== 'USDT') continue;
+    const changeClass = info.change >= 0 ? 'text-green' : 'text-red';
+    const changeIcon = info.change >= 0 ? '📈' : '📉';
+    html += `<tr>
+      <td class="fw-bold">${sym}</td>
+      <td>${symbols[sym] || sym}</td>
+      <td class="fw-bold">$${info.price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+      <td class="${changeClass}">${changeIcon} ${info.change.toFixed(2)}%</td>
+      <td>
+        <button class="btn-sm btn-primary" onclick="quickBuy('${sym}', ${info.price})">買</button>
+        <button class="btn-sm btn-danger" onclick="quickSell('${sym}', ${info.price})">賣</button>
+      </td>
+    </tr>`;
+  }
+  tbody.innerHTML = html;
+  
+  // Update previews
+  document.getElementById('buyAmount').addEventListener('input', updateBuyPreview);
+  document.getElementById('sellAmount').addEventListener('input', updateSellPreview);
+  document.getElementById('buyCurrency').addEventListener('change', updateBuyPreview);
+  document.getElementById('sellCurrency').addEventListener('change', updateSellPreview);
+}
+
+function updateBuyPreview() {
+  const cur = document.getElementById('buyCurrency').value;
+  const amt = parseFloat(document.getElementById('buyAmount').value) || 0;
+  const price = cryptoPrices[cur]?.price || 0;
+  if (price > 0) {
+    document.getElementById('buyPreview').textContent = (amt / price).toFixed(8) + ' ' + cur;
+  }
+}
+
+function updateSellPreview() {
+  const cur = document.getElementById('sellCurrency').value;
+  const amt = parseFloat(document.getElementById('sellAmount').value) || 0;
+  const price = cryptoPrices[cur]?.price || 0;
+  if (price > 0) {
+    document.getElementById('sellPreview').textContent = '$' + (amt * price).toFixed(2);
+  }
+}
+
+async function loadWallet() {
+  const res = await apiGet('/crypto/wallet');
+  if (!res.success) return;
+  const tbody = document.getElementById('walletBalances');
+  const wallet = res.wallet;
+  const prices = cryptoPrices;
+  
+  let html = '';
+  let total = 0;
+  for (const [cur, info] of Object.entries(wallet)) {
+    const bal = info.balance || 0;
+    const price = prices[cur]?.price || (cur === 'USD' ? 1 : 0);
+    const usdVal = bal * price;
+    total += usdVal;
+    if (bal > 0 || cur === 'USD') {
+      html += `<tr><td>${cur}</td><td class="fw-bold">${formatCrypto(bal, cur)}</td><td>$${usdVal.toFixed(2)}</td></tr>`;
+    }
+  }
+  html += `<tr class="total-row"><td><strong>總計</strong></td><td></td><td><strong>$${total.toFixed(2)}</strong></td></tr>`;
+  tbody.innerHTML = html;
+}
+
+function quickBuy(sym, price) {
+  document.getElementById('buyCurrency').value = sym;
+  updateBuyPreview();
+  document.getElementById('buyAmount').focus();
+}
+
+function quickSell(sym, price) {
+  document.getElementById('sellCurrency').value = sym;
+  updateSellPreview();
+  document.getElementById('sellAmount').focus();
+}
+
+document.getElementById('buyCryptoForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const currency = document.getElementById('buyCurrency').value;
+  const amount = parseFloat(document.getElementById('buyAmount').value);
+  const res = await apiPost('/crypto/buy', { currency, amount_usd: amount });
+  showToast(res.message, res.success ? 'success' : 'error');
+  if (res.success) { loadWallet(); loadPrices(); }
+});
+
+document.getElementById('sellCryptoForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const currency = document.getElementById('sellCurrency').value;
+  const amount = parseFloat(document.getElementById('sellAmount').value);
+  const res = await apiPost('/crypto/sell', { currency, amount });
+  showToast(res.message, res.success ? 'success' : 'error');
+  if (res.success) { loadWallet(); loadPrices(); }
+});
+
+loadCryptoPage();
+setInterval(loadPrices, 30000);
+</script>
+</body>
+</html>

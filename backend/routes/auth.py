@@ -16,7 +16,7 @@ def register():
     password = data.get('password', '').strip()
     invite_code = data.get('invite_code', '').strip().upper()
 
-    if not all([username, email, password, invite_code]):
+    if not all([username, email, password]):
         return jsonify({'success': False, 'message': '請填寫所有欄位'})
 
     if len(password) < 6:
@@ -28,9 +28,12 @@ def register():
     if User.query.filter_by(email=email).first():
         return jsonify({'success': False, 'message': '電郵已被註冊'})
 
-    code = InviteCode.query.filter_by(code=invite_code).first()
-    if not code or not code.is_valid():
-        return jsonify({'success': False, 'message': '邀請碼無效或已用盡'})
+    # 如果有邀請碼就驗證，冇嘅就當成公開註冊
+    if invite_code:
+        code = InviteCode.query.filter_by(code=invite_code).first()
+        if not code or not code.is_valid():
+            return jsonify({'success': False, 'message': '邀請碼無效或已用盡'})
+        code.used_count += 1
 
     # Generate referral code
     ref_code = ''.join(random.choices('ABCDEFGHJKLMNPQRSTUVWXYZ23456789', k=8))
@@ -39,12 +42,11 @@ def register():
         username=username,
         email=email,
         password_hash=generate_password_hash(password),
-        invite_code_used=invite_code,
+        invite_code_used=invite_code or '公開註冊',
         referral_code=ref_code,
         usd_balance=10.0  # Welcome bonus
     )
     db.session.add(user)
-    code.used_count += 1
     db.session.commit()
 
     # Log transaction

@@ -37,9 +37,10 @@ if ('serviceWorker' in navigator) {
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            overflow: hidden;
+            justify-content: flex-start;
+            overflow-y: auto;
             position: relative;
+            padding: 20px 0;
         }
 
         body::before {
@@ -162,6 +163,8 @@ if ('serviceWorker' in navigator) {
             z-index: 2;
             width: 440px;
             max-width: 92vw;
+            max-height: 90vh;
+            overflow-y: auto;
             background: rgba(15, 23, 42, 0.75);
             backdrop-filter: blur(24px);
             -webkit-backdrop-filter: blur(24px);
@@ -174,6 +177,17 @@ if ('serviceWorker' in navigator) {
             animation: cardEnter 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
             transform: translateY(30px);
             opacity: 0;
+        }
+
+        .auth-card::-webkit-scrollbar {
+            width: 4px;
+        }
+        .auth-card::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .auth-card::-webkit-scrollbar-thumb {
+            background: rgba(240,185,11,0.3);
+            border-radius: 2px;
         }
 
         @keyframes cardEnter {
@@ -697,15 +711,15 @@ if ('serviceWorker' in navigator) {
             <!-- Register Form -->
             <form class="auth-form" id="registerForm" autocomplete="off">
                 <div class="auth-field">
-                    <label>邀請碼 <span class="required">*</span></label>
+                    <label>邀請碼 <span class="optional">(可選)</span></label>
                     <div class="input-wrapper">
                         <i class="fas fa-ticket input-icon"></i>
                         <input type="text" name="invite_code" id="inviteCode" class="invite-code"
-                               placeholder="請輸入邀請碼（自動大寫）" required maxlength="20"
+                               placeholder="邀請碼（可留空，自動大寫）" maxlength="20"
                                oninput="this.value = this.value.toUpperCase()">
                     </div>
                     <div class="invite-status" id="inviteStatus"></div>
-                    <small class="field-hint">需要有效邀請碼才能註冊</small>
+                    <small class="field-hint">邀請碼係可選嘅，你可以直接註冊</small>
                 </div>
                 <div class="auth-field">
                     <label>用戶名 <span class="required">*</span></label>

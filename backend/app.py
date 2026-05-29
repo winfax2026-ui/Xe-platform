@@ -111,6 +111,10 @@ def create_app():
     @app.route('/transactions')
     def transactions():
         return render_template('transactions.html')
+
+    @app.route('/download-app')
+    def download_app():
+        return render_template('download-app.html')
     
     @app.route('/robots.txt')
     def robots():

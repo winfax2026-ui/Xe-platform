@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>下載 XE App - XE平台</title>
+<meta name="theme-color" content="#0a0e1a">
+<link rel="manifest" href="/static/manifest.json">
+<link rel="stylesheet" href="/static/css/style.css">
+<style>
+  .download-hero {
+    text-align: center;
+    padding: 60px 20px 40px;
+    background: linear-gradient(135deg, rgba(240,185,11,0.08), rgba(0,212,170,0.08));
+    border-radius: 20px;
+    margin-bottom: 30px;
+  }
+  .download-hero .logo {
+    font-size: 4rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #f0b90b, #00d4aa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .download-hero .subtitle { color: var(--text-secondary); margin-top: 8px; font-size: 1.1rem; }
+  .step-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 16px;
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    transition: all 0.3s;
+  }
+  .step-card:hover { border-color: var(--primary); transform: translateY(-2px); }
+  .step-number {
+    width: 40px; height: 40px;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 1.1rem; flex-shrink: 0;
+  }
+  .step-content h3 { margin: 0 0 4px; }
+  .step-content p { margin: 0; color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5; }
+  .device-tabs { display: flex; gap: 8px; margin-bottom: 24px; }
+  .device-tab {
+    flex: 1; padding: 14px; text-align: center; border-radius: 12px;
+    background: var(--bg-card); border: 1px solid var(--border);
+    cursor: pointer; transition: all 0.3s; font-weight: 600;
+  }
+  .device-tab.active { border-color: var(--primary); background: rgba(240,185,11,0.1); }
+  .install-btn {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 14px 32px; border-radius: 12px; font-size: 1.1rem; font-weight: 600;
+    background: linear-gradient(135deg, #f0b90b, #d4a108);
+    color: #0a0e1a; border: none; cursor: pointer; text-decoration: none;
+    margin-top: 8px; transition: all 0.3s;
+  }
+  .install-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(240,185,11,0.3); }
+  .features-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px; margin-top: 24px;
+  }
+  .feature-item {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 20px; text-align: center;
+  }
+  .feature-item .icon { font-size: 2rem; margin-bottom: 8px; }
+  .feature-item .label { font-weight: 600; }
+  .feature-item .desc { font-size: 0.8rem; color: var(--text-secondary); margin-top: 4px; }
+</style>
+</head>
+<body>
+<div class="app-container">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">XE<small>版</small></div>
+    <nav class="sidebar-nav">
+      <a href="/dashboard"><span class="nav-icon">📊</span>儀表板</a>
+      <a href="/mining"><span class="nav-icon">⛏️</span>流量金挖掘</a>
+      <a href="/exchange-page"><span class="nav-icon">🔄</span>貨幣兌換</a>
+      <a href="/stocks-page"><span class="nav-icon">📈</span>股票交易</a>
+      <a href="/crypto-page"><span class="nav-icon">₿</span>加密貨幣</a>
+      <a href="/wallet"><span class="nav-icon">👛</span>錢包</a>
+      <a href="/deposit"><span class="nav-icon">📥</span>存款</a>
+      <a href="/withdraw"><span class="nav-icon">📤</span>提款</a>
+      <a href="/kyc-page"><span class="nav-icon">🆔</span>KYC認證</a>
+      <a href="/tradebot-page"><span class="nav-icon">🤖</span>交易機械人</a>
+      <a href="/ledger"><span class="nav-icon">📜</span>公開賬本</a>
+      <a href="/transactions"><span class="nav-icon">🧾</span>交易記錄</a>
+      <a href="/download-app" class="active"><span class="nav-icon">📲</span>下載 App</a>
+    </nav>
+  </aside>
+  <main class="main-content">
+    <header class="topbar">
+      <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+      <h2>📲 下載 XE App</h2>
+      <div class="topbar-right"><span id="userDisplay">--</span> <button onclick="logout()" class="btn-sm btn-danger">登出</button></div>
+    </header>
+    <div class="content">
+      <div class="download-hero">
+        <div class="logo">XE<span style="background:linear-gradient(135deg,#00d4aa,#00d4aa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">版</span></div>
+        <div class="subtitle">股票及虛擬貨幣平台 · PWA 網頁版 App</div>
+        <div style="display:flex;justify-content:center;gap:12px;margin-top:16px;flex-wrap:wrap;">
+          <a class="install-btn" href="/" onclick="return installApp()">
+            📲 安裝到主畫面
+          </a>
+        </div>
+        <p style="color:var(--text-secondary);font-size:0.85rem;margin-top:12px;">
+          ⚡ 細過 1MB · 唔使下載商店 · 即時更新
+        </p>
+      </div>
+
+      <div class="device-tabs">
+        <div class="device-tab active" onclick="switchDevice('android')" id="tabAndroid">📱 Android</div>
+        <div class="device-tab" onclick="switchDevice('ios')" id="tabIos">🍎 iPhone/iPad</div>
+        <div class="device-tab" onclick="switchDevice('desktop')" id="tabDesktop">💻 電腦</div>
+      </div>
+
+      <!-- Android Instructions -->
+      <div id="androidSteps">
+        <div class="step-card">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <h3>打開 Chrome 瀏覽器</h3>
+            <p>用 Android 嘅 Chrome 瀏覽器打開呢個網站</p>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <h3>㩒右上角 ⋮ 選單</h3>
+            <p>喺 Chrome 右上角揀「三點」選單</p>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <h3>揀「加到主畫面」</h3>
+            <p>選單入面揀「加到主畫面」(Add to Home Screen)</p>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-number">4</div>
+          <div class="step-content">
+            <h3>完成 🎉</h3>
+            <p>主畫面會出現 XE 平台圖示，㩒佢就可以直接打開，好似真正 App 一樣！</p>
+          </div>
+        </div>
+        <div style="background:rgba(240,185,11,0.08);border:1px solid rgba(240,185,11,0.2);border-radius:12px;padding:16px;margin-top:16px;">
+          <strong>💡 貼士：</strong> 有啲 Android 機安裝時會彈出「安裝 App」嘅提示，㩒「安裝」就得！
+        </div>
+      </div>
+
+      <!-- iOS Instructions -->
+      <div id="iosSteps" style="display:none;">
+        <div class="step-card">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <h3>打開 Safari 瀏覽器</h3>
+            <p>用 iPhone/iPad 嘅 Safari 打開呢個網站（必須用 Safari）</p>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <h3>㩒下方 Share 按鈕</h3>
+            <p>喺 Safari 下方中間㩒「分享」圖示（正方形+箭頭）</p>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <h3>㩒「加入主畫面」</h3>
+            <p>向下碌，揀「加入主畫面」(Add to Home Screen)</p>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-number">4</div>
+          <div class="step-content">
+            <h3>完成 🎉</h3>
+            <p>主畫面會出現 XE 平台圖示，下次直接㩒開就得！</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Desktop Instructions -->
+      <div id="desktopSteps" style="display:none;">
+        <div class="step-card">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <h3>打開 Chrome / Edge 瀏覽器</h3>
+            <p>用電腦版 Chrome 或 Edge 打開呢個網站</p>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <h3>㩒網址列嘅安裝圖示</h3>
+            <p>喺網址列右邊會出現一個「電腦+下載」圖示，㩒佢</p>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <h3>或者用選單</h3>
+            <p>Chrome: ⋮ → 「安裝 XE平台」<br>Edge: ⋯ → 「Apps」→ 「安裝此網站作為應用程式」</p>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-number">4</div>
+          <div class="step-content">
+            <h3>完成 🎉</h3>
+            <p>XE 平台會以獨立視窗打開，好似桌面 App 咁用！</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:24px;">
+        <h3>✨ App 特色功能</h3>
+        <div class="features-grid">
+          <div class="feature-item"><div class="icon">📱</div><div class="label">全螢幕模式</div><div class="desc">冇瀏覽器欄，真正 App 體驗</div></div>
+          <div class="feature-item"><div class="icon">⚡</div><div class="label">極速載入</div><div class="desc">快取技術，打開即用</div></div>
+          <div class="feature-item"><div class="icon">📶</div><div class="label">離線可用</div><div class="desc">基本頁面離線都睇到</div></div>
+          <div class="feature-item"><div class="icon">🔄</div><div class="label">自動更新</div><div class="desc">每次打開自動最新版本</div></div>
+          <div class="feature-item"><div class="icon">🔒</div><div class="label">安全加密</div><div class="desc">HTTPS + Session 保護</div></div>
+          <div class="feature-item"><div class="icon">🌙</div><div class="label">暗色主題</div><div class="desc">慳電又護眼嘅暗色設計</div></div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <div id="toastContainer"></div>
+</div>
+<script src="/static/js/main.js"></script>
+<script>
+async function loadPage() {
+  const user = await apiGet('/auth/me');
+  if (!user.success) { window.location.href = '/'; return; }
+  document.getElementById('userDisplay').textContent = user.user.username;
+}
+
+function switchDevice(device) {
+  document.querySelectorAll('.device-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tabAndroid').classList.toggle('active', device === 'android');
+  document.getElementById('tabIos').classList.toggle('active', device === 'ios');
+  document.getElementById('tabDesktop').classList.toggle('active', device === 'desktop');
+  document.getElementById('androidSteps').style.display = device === 'android' ? 'block' : 'none';
+  document.getElementById('iosSteps').style.display = device === 'ios' ? 'block' : 'none';
+  document.getElementById('desktopSteps').style.display = device === 'desktop' ? 'block' : 'none';
+}
+
+function installApp() {
+  // Check if already installed
+  if (window.matchMedia('(display-mode: standalone)').matches) {
+    showToast('✅ XE App 已經安裝咗啦！', 'info');
+    return false;
+  }
+  // Try to trigger browser's install prompt via beforeinstallprompt event
+  // Fall back to showing instructions
+  showToast('📲 請跟住手機嘅步驟加到主畫面', 'info');
+  return false;
+}
+
+loadPage();
+</script>
+</body>
+</html>

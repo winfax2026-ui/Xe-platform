@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0a0e1a"/>
+      <stop offset="100%" stop-color="#1a1e3a"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f0b90b"/>
+      <stop offset="100%" stop-color="#f7d84a"/>
+    </linearGradient>
+  </defs>
+  <rect width="192" height="192" rx="32" fill="url(#bg)"/>
+  <!-- Outer glow ring -->
+  <rect x="8" y="8" width="176" height="176" rx="28" fill="none" stroke="url(#gold)" stroke-width="2" opacity="0.3"/>
+  <!-- XE Logo -->
+  <text x="96" y="110" font-family="Arial, sans-serif" font-size="72" font-weight="bold" fill="url(#gold)" text-anchor="middle">XE</text>
+  <!-- Small "版" character -->
+  <text x="140" y="135" font-family="Arial, sans-serif" font-size="28" fill="#00d4aa" text-anchor="middle" font-weight="bold">版</text>
+  <!-- Decorative dots -->
+  <circle cx="48" cy="48" r="4" fill="#f0b90b" opacity="0.5"/>
+  <circle cx="144" cy="48" r="3" fill="#00d4aa" opacity="0.4"/>
+  <circle cx="48" cy="144" r="3" fill="#00d4aa" opacity="0.4"/>
+  <circle cx="144" cy="144" r="4" fill="#f0b90b" opacity="0.5"/>
+</svg>

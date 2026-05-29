@@ -1,10 +1,28 @@
 <!DOCTYPE html>
 <html lang="zh-HK">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>股票及虛擬貨幣平台 XE版 — 登入 / 註冊</title>
-    <link rel="stylesheet" href="/static/css/style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0a0e1a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="XE平台">
+<link rel="manifest" href="/static/manifest.json">
+<link rel="apple-touch-icon" href="/static/img/icon-192.svg">
+<link rel="icon" type="image/svg+xml" href="/static/img/icon-192.svg">
+<title>股票及虛擬貨幣平台 XE版</title>
+<link rel="stylesheet" href="/static/css/style.css">
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/static/sw.js').then(reg => {
+      console.log('✅ PWA Service Worker 註冊成功');
+    }).catch(err => {
+      console.log('⚠️ PWA Service Worker 註冊失敗:', err);
+    });
+  });
+}
+</script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
